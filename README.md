@@ -1,7 +1,7 @@
 # ytscript
 
 [![CI](https://github.com/rolme/ytscript/actions/workflows/ci.yml/badge.svg)](https://github.com/rolme/ytscript/actions/workflows/ci.yml)
-[![npm version](https://badge.fury.io/js/ytscript.svg)](https://badge.fury.io/js/ytscript)
+[![npm version](https://badge.fury.io/js/%40rolme%2Fytscript.svg)](https://badge.fury.io/js/%40rolme%2Fytscript)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9%2B-blue)](https://www.typescriptlang.org/)
 
@@ -11,10 +11,10 @@ A CLI tool to download YouTube video transcripts with automatic video title-base
 
 ```bash
 # Install globally for CLI usage
-npm install -g ytscript
+npm install -g @rolme/ytscript
 
 # Install as a dependency in your project
-npm install ytscript
+npm install @rolme/ytscript
 ```
 
 ## CLI Usage
@@ -33,7 +33,7 @@ ytscript https://www.youtube.com/watch?v=VIDEO_ID -o transcript.txt
 ## API Usage
 
 ```typescript
-import { getTranscript, saveTranscript } from "ytscript";
+import { getTranscript, saveTranscript } from "@rolme/ytscript";
 
 // Get transcript text and segments
 const result = await getTranscript("https://www.youtube.com/watch?v=VIDEO_ID", {
