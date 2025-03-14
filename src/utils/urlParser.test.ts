@@ -1,5 +1,5 @@
 import { validateUrl, extractVideoId } from './urlParser';
-import { TranscriptError } from '../types';
+import { TranscriptError } from '../types/transcript';
 
 describe('URL Parser', () => {
   describe('validateUrl', () => {

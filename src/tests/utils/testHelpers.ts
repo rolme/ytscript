@@ -1,4 +1,4 @@
-import { TranscriptResult } from '../../types';
+import { TranscriptResult } from '../../types/transcript';
 
 export const mockTranscriptResult: TranscriptResult = {
   transcript: 'test transcript content',
