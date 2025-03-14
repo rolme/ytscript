@@ -1,105 +1,152 @@
-# ytscript
+# @rolme/ytscript
 
-[![CI](https://github.com/rolme/ytscript/actions/workflows/ci.yml/badge.svg)](https://github.com/rolme/ytscript/actions/workflows/ci.yml)
-[![npm version](https://badge.fury.io/js/%40rolme%2Fytscript.svg)](https://badge.fury.io/js/%40rolme%2Fytscript)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-4.9%2B-blue)](https://www.typescriptlang.org/)
+A powerful CLI tool and Node.js package for downloading and summarizing YouTube video transcripts.
 
-A CLI tool to download YouTube video transcripts with automatic video title-based filenames. Use it as a CLI tool or import it into your project.
+## Features
+
+- Download transcripts from YouTube videos
+- Summarize transcripts using AI (ChatGPT or Claude)
+- Support for multiple languages
+- Both CLI and programmatic usage
+- Customizable summary styles and lengths
 
 ## Installation
 
 ```bash
-# Install globally for CLI usage
-npm install -g @rolme/ytscript
-
-# Install as a dependency in your project
 npm install @rolme/ytscript
 ```
 
 ## CLI Usage
 
+### Download Transcript
+
 ```bash
-# Basic usage - saves transcript with video title as filename
-ytscript https://www.youtube.com/watch?v=VIDEO_ID
+# Basic usage
+ytscript download https://youtube.com/watch?v=xxx
 
 # Specify language
-ytscript https://www.youtube.com/watch?v=VIDEO_ID -l en
+ytscript download https://youtube.com/watch?v=xxx -l es
 
 # Custom output path
-ytscript https://www.youtube.com/watch?v=VIDEO_ID -o transcript.txt
+ytscript download https://youtube.com/watch?v=xxx -o transcript.txt
 ```
 
-## API Usage
-
-```typescript
-import { getTranscript, saveTranscript } from "@rolme/ytscript";
-
-// Get transcript text and segments
-const result = await getTranscript("https://www.youtube.com/watch?v=VIDEO_ID", {
-  language: "en", // optional
-});
-console.log(result.transcript); // Clean, formatted transcript text
-console.log(result.videoId); // Video ID for additional operations
-
-// Save transcript to file (uses video title as filename by default)
-const outputPath = await saveTranscript(
-  "https://www.youtube.com/watch?v=VIDEO_ID",
-  {
-    language: "en", // optional
-    outputPath: "transcript.txt", // optional, overrides title-based filename
-  }
-);
-console.log(`Saved to: ${outputPath}`);
-```
-
-## Features
-
-- Automatic video title-based filenames
-- Clean, formatted transcript text (HTML entities are properly decoded)
-- Support for multiple languages
-- TypeScript support
-- Both CLI and programmatic usage
-- Custom output path option
-
-## Options
-
-- `language`: Language code (e.g., 'en', 'es', 'fr')
-- `outputPath`: Custom file path for saving the transcript. If not provided, uses `{video-title}-{timestamp}.txt`
-
-## Output Format
-
-By default, transcripts are saved as:
-
-- Filename: `{video-title}-{timestamp}.txt` (e.g., `build-ai-agents-that-evolve-over-time-2025-03-14T20-13-59-980Z.txt`)
-- Content: Clean text with proper formatting and decoded HTML entities
-
-## Development
+### Summarize Transcript
 
 ```bash
-# Install dependencies
-npm install
+# Basic usage (uses ChatGPT by default)
+ytscript summarize https://youtube.com/watch?v=xxx
 
-# Run tests
-npm test
+# Use Claude with detailed summary
+ytscript summarize https://youtube.com/watch?v=xxx -p claude -s detailed
 
-# Run linter
-npm run lint
+# Customize summary length
+ytscript summarize https://youtube.com/watch?v=xxx -m 1000
 
-# Build the project
-npm run build
+# Save to specific file with language preference
+ytscript summarize https://youtube.com/watch?v=xxx -l en -o summary.txt
+```
 
-# Start the CLI tool locally
-npm start
+### CLI Options
+
+#### Download Command
+
+- `-l, --language <code>`: Language code (e.g., en, es, fr)
+- `-o, --output <path>`: Output file path
+
+#### Summarize Command
+
+- `-l, --language <code>`: Language code (e.g., en, es, fr)
+- `-o, --output <path>`: Output file path
+- `-p, --provider <name>`: AI provider (chatgpt or claude)
+- `-k, --api-key <key>`: AI provider API key
+- `-s, --style <style>`: Summary style (concise or detailed)
+- `-m, --max-length <number>`: Maximum length of the summary
+
+## Programmatic Usage
+
+### Basic Usage
+
+```typescript
+import { getTranscript, summarizeVideo } from "@rolme/ytscript";
+
+// Download transcript
+const result = await getTranscript("https://youtube.com/watch?v=xxx");
+console.log(result.transcript);
+
+// Summarize video
+const summary = await summarizeVideo("https://youtube.com/watch?v=xxx");
+console.log(summary.transcript); // Original transcript
+console.log(summary.summary); // AI-generated summary
+```
+
+### Advanced Usage
+
+```typescript
+// Configure summarization options
+const result = await summarizeVideo("https://youtube.com/watch?v=xxx", {
+  provider: "claude",
+  apiKey: "your-api-key",
+  language: "en",
+  summary: {
+    style: "detailed",
+    maxLength: 1000,
+  },
+});
+
+// Save transcript and summary to file
+const filePath = await saveSummary("https://youtube.com/watch?v=xxx", {
+  outputPath: "output.txt",
+  provider: "chatgpt",
+  summary: {
+    style: "concise",
+  },
+});
+```
+
+## API Keys
+
+The package supports two AI providers:
+
+1. ChatGPT (OpenAI)
+
+   - Set `OPENAI_API_KEY` environment variable
+   - Or provide via `apiKey` option
+
+2. Claude (Anthropic)
+   - Set `ANTHROPIC_API_KEY` environment variable
+   - Or provide via `apiKey` option
+
+You can use a `.env` file to store your API keys:
+
+```env
+OPENAI_API_KEY=your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
+```
+
+## Error Handling
+
+The package exports error types for specific handling:
+
+```typescript
+import { TranscriptError, AIError } from "@rolme/ytscript";
+
+try {
+  const result = await summarizeVideo("https://youtube.com/watch?v=xxx");
+} catch (error) {
+  if (error instanceof TranscriptError) {
+    console.error("Failed to fetch transcript:", error.message);
+  } else if (error instanceof AIError) {
+    console.error("AI summarization failed:", error.message);
+  } else {
+    console.error("Unknown error:", error);
+  }
+}
 ```
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

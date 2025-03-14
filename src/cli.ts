@@ -1,30 +1,106 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { saveTranscript } from './transcriptFetcher';
+import { getTranscript, summarizeVideo, saveSummary } from './index';
 import { TranscriptError } from './types';
+import { AIError } from './types/ai';
+import { version } from '../package.json';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const program = new Command();
 
 program
-  .name('ytscript')
-  .description('Download YouTube video transcripts')
-  .version('1.0.0')
+  .name('@rolme/ytscript')
+  .description('CLI tool to download and summarize YouTube video transcripts')
+  .version(version);
+
+program
+  .command('download')
+  .description('Download transcript from a YouTube video')
   .argument('<url>', 'YouTube video URL')
   .option('-l, --language <code>', 'Language code (e.g., en, es, fr)')
   .option('-o, --output <path>', 'Output file path')
   .action(async (url: string, options: { language?: string; output?: string }) => {
     try {
-      const outputPath = await saveTranscript(url, {
-        language: options.language,
-        outputPath: options.output
-      });
-      console.log(`Transcript saved to: ${outputPath}`);
+      const result = await getTranscript(url, options);
+      console.log('Transcript downloaded successfully!');
+      if (options.output) {
+        console.log(`Saved to: ${options.output}`);
+      } else {
+        console.log(result.transcript);
+      }
     } catch (error) {
       if (error instanceof TranscriptError) {
-        console.error(`Error: ${error.message}`);
+        console.error('Failed to download transcript:', error.message);
+      } else if (error instanceof Error) {
+        console.error('Unexpected error:', error.message);
       } else {
-        console.error('An unexpected error occurred');
+        console.error('Unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+program
+  .command('summarize')
+  .description('Download and summarize a YouTube video transcript')
+  .argument('<url>', 'YouTube video URL')
+  .option('-l, --language <code>', 'Language code (e.g., en, es, fr)')
+  .option('-o, --output <path>', 'Output file path')
+  .option('-p, --provider <name>', 'AI provider (chatgpt or claude)')
+  .option('-k, --api-key <key>', 'AI provider API key')
+  .option('-s, --style <style>', 'Summary style (concise or detailed)')
+  .option('-m, --max-length <number>', 'Maximum length of the summary')
+  .action(async (url: string, options: {
+    language?: string;
+    output?: string;
+    provider?: string;
+    apiKey?: string;
+    style?: string;
+    maxLength?: string;
+  }) => {
+    try {
+      const maxLength = options.maxLength ? parseInt(options.maxLength, 10) : undefined;
+      
+      if (options.output) {
+        const filePath = await saveSummary(url, {
+          language: options.language,
+          outputPath: options.output,
+          provider: options.provider,
+          apiKey: options.apiKey,
+          summary: {
+            style: options.style as 'concise' | 'detailed',
+            maxLength
+          }
+        });
+        console.log('Summary saved to:', filePath);
+      } else {
+        const result = await summarizeVideo(url, {
+          language: options.language,
+          provider: options.provider,
+          apiKey: options.apiKey,
+          summary: {
+            style: options.style as 'concise' | 'detailed',
+            maxLength
+          }
+        });
+        console.log('\nOriginal Transcript:');
+        console.log(result.transcript);
+        console.log('\nSummary:');
+        console.log(result.summary);
+      }
+    } catch (error) {
+      if (error instanceof TranscriptError) {
+        console.error('Failed to download transcript:', error.message);
+      } else if (error instanceof AIError) {
+        console.error('Failed to generate summary:', error.message);
+      } else if (error instanceof Error) {
+        console.error('Unexpected error:', error.message);
+      } else {
+        console.error('Unknown error occurred');
       }
       process.exit(1);
     }
