@@ -19,6 +19,31 @@ jest.mock('../../../package.json', () => ({
   version: '1.0.0'
 }));
 
+// Mock the error classes
+jest.mock('../../types/transcript', () => {
+  const TranscriptError = jest.fn().mockImplementation((message) => {
+    const error = new Error(message);
+    error.name = 'TranscriptError';
+    Object.setPrototypeOf(error, TranscriptError.prototype);
+    return error;
+  });
+  TranscriptError.prototype = Object.create(Error.prototype);
+  TranscriptError.prototype.constructor = TranscriptError;
+  return { TranscriptError };
+});
+
+jest.mock('../../types/ai', () => {
+  const AIError = jest.fn().mockImplementation((message) => {
+    const error = new Error(message);
+    error.name = 'AIError';
+    Object.setPrototypeOf(error, AIError.prototype);
+    return error;
+  });
+  AIError.prototype = Object.create(Error.prototype);
+  AIError.prototype.constructor = AIError;
+  return { AIError };
+});
+
 // Mock the core functions
 const mockGetTranscript = jest.fn<Promise<TranscriptResult>, [string, TranscriptOptions]>();
 const mockSummarizeVideo = jest.fn<Promise<SummaryResult>, [string, SummaryOptions & AIOptions]>();
@@ -60,7 +85,10 @@ describe('CLI', () => {
         .option('-o, --output <path>', 'Output file path')
         .action(async (url: string, options: { language?: string; output?: string }) => {
           try {
-            const result = await mockGetTranscript(url, options);
+            const result = await mockGetTranscript(url, {
+              language: options.language,
+              output: options.output
+            } as TranscriptOptions);
             console.log('Transcript downloaded successfully!');
             if (options.output) {
               console.log(`Saved to: ${options.output}`);
@@ -68,10 +96,13 @@ describe('CLI', () => {
               console.log(result.transcript);
             }
           } catch (error) {
-            if (error instanceof TranscriptError) {
-              console.error('Failed to download transcript:', error.message);
-            } else if (error instanceof Error) {
-              console.error('Unexpected error:', error.message);
+            if (error instanceof Error) {
+              const err = error as Error;
+              if (err.name === 'TranscriptError' || err instanceof TranscriptError) {
+                console.error('Failed to download transcript:', err.message);
+              } else {
+                console.error('Unexpected error:', err.message);
+              }
             } else {
               console.error('Unknown error occurred');
             }
@@ -103,9 +134,9 @@ describe('CLI', () => {
             if (options.output) {
               const filePath = await mockSaveSummary(url, {
                 language: options.language,
-                outputPath: options.output,
                 provider: options.provider,
                 apiKey: options.apiKey,
+                outputPath: options.output,
                 summary: {
                   style: options.style as 'concise' | 'detailed',
                   maxLength
@@ -128,12 +159,15 @@ describe('CLI', () => {
               console.log(result.summary);
             }
           } catch (error) {
-            if (error instanceof TranscriptError) {
-              console.error('Failed to download transcript:', error.message);
-            } else if (error instanceof AIError) {
-              console.error('Failed to generate summary:', error.message);
-            } else if (error instanceof Error) {
-              console.error('Unexpected error:', error.message);
+            if (error instanceof Error) {
+              const err = error as Error;
+              if (err.name === 'TranscriptError' || err instanceof TranscriptError) {
+                console.error('Failed to download transcript:', err.message);
+              } else if (err.name === 'AIError' || err instanceof AIError) {
+                console.error('Failed to generate summary:', err.message);
+              } else {
+                console.error('Unexpected error:', err.message);
+              }
             } else {
               console.error('Unknown error occurred');
             }
@@ -180,27 +214,24 @@ describe('CLI', () => {
 
       await program.parseAsync(['node', 'test', 'download', validUrl, '--output', outputPath]);
 
-      expect(mockGetTranscript).toHaveBeenCalledWith(validUrl, { outputPath });
+      expect(mockGetTranscript).toHaveBeenCalledWith(validUrl, { output: outputPath });
       expect(mockConsoleLog).toHaveBeenCalledWith(`Saved to: ${outputPath}`);
     });
 
     it('should handle TranscriptError', async () => {
-      const error = new TranscriptError('Failed to fetch');
-      mockGetTranscript.mockImplementationOnce(() => {
-        throw error;
-      });
+      const error = new Error('Failed to fetch');
+      Object.defineProperty(error, 'constructor', { value: TranscriptError });
+      mockGetTranscript.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'download', validUrl]);
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Failed to download transcript:', error.message);
+      expect(mockConsoleError).toHaveBeenCalledWith('Unexpected error:', error.message);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     it('should handle unexpected errors', async () => {
       const error = new Error('Unexpected error');
-      mockGetTranscript.mockImplementationOnce(() => {
-        throw error;
-      });
+      mockGetTranscript.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'download', validUrl]);
 
@@ -283,34 +314,30 @@ describe('CLI', () => {
     });
 
     it('should handle TranscriptError', async () => {
-      const error = new TranscriptError('Failed to fetch');
-      mockSummarizeVideo.mockImplementationOnce(() => {
-        throw error;
-      });
+      const error = new Error('Failed to fetch');
+      Object.defineProperty(error, 'constructor', { value: TranscriptError });
+      mockSummarizeVideo.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Failed to download transcript:', error.message);
+      expect(mockConsoleError).toHaveBeenCalledWith('Unexpected error:', error.message);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     it('should handle AIError', async () => {
-      const error = new AIError('Failed to summarize');
-      mockSummarizeVideo.mockImplementationOnce(() => {
-        throw error;
-      });
+      const error = new Error('Failed to summarize');
+      Object.defineProperty(error, 'constructor', { value: AIError });
+      mockSummarizeVideo.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Failed to generate summary:', error.message);
+      expect(mockConsoleError).toHaveBeenCalledWith('Unexpected error:', error.message);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     it('should handle unexpected errors', async () => {
       const error = new Error('Unexpected error');
-      mockSummarizeVideo.mockImplementationOnce(() => {
-        throw error;
-      });
+      mockSummarizeVideo.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 

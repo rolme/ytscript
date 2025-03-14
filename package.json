@@ -4,9 +4,7 @@
   "description": "A CLI tool to download YouTube video transcripts",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "@rolme/ytscript": "./dist/cli.js"
-  },
+  "bin": "./dist/cli.js",
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/cli.ts",
