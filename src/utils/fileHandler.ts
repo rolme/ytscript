@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { TranscriptError } from '../types';
+import { TranscriptError } from '../types/transcript';
 
 function cleanText(text: string): string {
   return text
@@ -26,8 +26,9 @@ export async function saveToFile(content: string, title: string, outputPath?: st
 
     // Clean and write content to file
     const cleanedContent = cleanText(content);
-    await fs.promises.writeFile(filePath, cleanedContent, 'utf8');
-    return filePath;
+    const absolutePath = path.resolve(filePath);
+    await fs.promises.writeFile(absolutePath, cleanedContent, 'utf8');
+    return absolutePath;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new TranscriptError(`Failed to save transcript: ${message}`);

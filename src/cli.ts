@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import { getTranscript, summarizeVideo, saveSummary } from './index';
-import { TranscriptError } from './types';
+import { TranscriptError } from './types/transcript';
 import { AIError } from './types/ai';
 import { version } from '../package.json';
 import dotenv from 'dotenv';
@@ -50,7 +50,7 @@ program
   .argument('<url>', 'YouTube video URL')
   .option('-l, --language <code>', 'Language code (e.g., en, es, fr)')
   .option('-o, --output <path>', 'Output file path')
-  .option('-p, --provider <name>', 'AI provider (chatgpt or claude)')
+  .option('-p, --provider <n>', 'AI provider (chatgpt or claude)')
   .option('-k, --api-key <key>', 'AI provider API key')
   .option('-s, --style <style>', 'Summary style (concise or detailed)')
   .option('-m, --max-length <number>', 'Maximum length of the summary')
@@ -106,4 +106,5 @@ program
     }
   });
 
-program.parse(); 
+// Export the program after all commands are defined
+export { program }; 
