@@ -55,4 +55,7 @@ transcripts/
 # Temporary files
 *.tmp
 temp/
-.cache/ 
+.cache/
+
+# Documentation (work in progress)
+docs/ 
