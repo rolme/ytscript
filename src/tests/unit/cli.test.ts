@@ -1,7 +1,13 @@
 import { Command } from 'commander';
-import { getTranscript, summarizeVideo, saveSummary } from '../../index';
+import type { TranscriptResult, TranscriptOptions } from '../../types/transcript';
 import { TranscriptError } from '../../types/transcript';
 import { AIError } from '../../types/ai';
+import type { SummaryOptions, AIOptions } from '../../types/ai';
+
+// Define the SummaryResult type that combines TranscriptResult with summary
+interface SummaryResult extends TranscriptResult {
+  summary: string;
+}
 
 // Mock dotenv
 jest.mock('dotenv', () => ({
@@ -14,20 +20,20 @@ jest.mock('../../../package.json', () => ({
 }));
 
 // Mock the core functions
-const mockGetTranscript = jest.fn();
-const mockSummarizeVideo = jest.fn();
-const mockSaveSummary = jest.fn();
+const mockGetTranscript = jest.fn<Promise<TranscriptResult>, [string, TranscriptOptions]>();
+const mockSummarizeVideo = jest.fn<Promise<SummaryResult>, [string, SummaryOptions & AIOptions]>();
+const mockSaveSummary = jest.fn<Promise<string>, [string, SummaryOptions & AIOptions & { outputPath: string }]>();
 
 jest.mock('../../index', () => ({
-  getTranscript: (...args: any[]) => mockGetTranscript(...args),
-  summarizeVideo: (...args: any[]) => mockSummarizeVideo(...args),
-  saveSummary: (...args: any[]) => mockSaveSummary(...args)
+  getTranscript: (url: string, options: TranscriptOptions) => mockGetTranscript(url, options),
+  summarizeVideo: (url: string, options: SummaryOptions & AIOptions) => mockSummarizeVideo(url, options),
+  saveSummary: (url: string, options: SummaryOptions & AIOptions & { outputPath: string }) => mockSaveSummary(url, options)
 }));
 
 // Mock console.log and console.error
 const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
 const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
-const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number | string | null) => undefined as never);
+const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
 describe('CLI', () => {
   let program: Command;
@@ -137,13 +143,14 @@ describe('CLI', () => {
 
       return { program };
     });
-    const cli = require('../../cli');
-    program = cli.program;
+    // Import the mocked CLI module
+    const { program: cliProgram } = jest.requireActual('../../cli');
+    program = cliProgram;
   });
 
   describe('download command', () => {
     const validUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-    const mockTranscript = {
+    const mockTranscript: TranscriptResult = {
       transcript: 'Test transcript',
       segments: [],
       videoId: 'dQw4w9WgXcQ'
@@ -168,12 +175,13 @@ describe('CLI', () => {
     });
 
     it('should handle output option', async () => {
-      mockGetTranscript.mockResolvedValueOnce({ ...mockTranscript, outputPath: 'output.txt' });
+      const outputPath = 'output.txt';
+      mockGetTranscript.mockResolvedValueOnce(mockTranscript);
 
-      await program.parseAsync(['node', 'test', 'download', validUrl, '--output', 'output.txt']);
+      await program.parseAsync(['node', 'test', 'download', validUrl, '--output', outputPath]);
 
-      expect(mockGetTranscript).toHaveBeenCalledWith(validUrl, { output: 'output.txt' });
-      expect(mockConsoleLog).toHaveBeenCalledWith('Saved to: output.txt');
+      expect(mockGetTranscript).toHaveBeenCalledWith(validUrl, { outputPath });
+      expect(mockConsoleLog).toHaveBeenCalledWith(`Saved to: ${outputPath}`);
     });
 
     it('should handle TranscriptError', async () => {
@@ -203,7 +211,7 @@ describe('CLI', () => {
 
   describe('summarize command', () => {
     const validUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-    const mockSummary = {
+    const mockSummary: SummaryResult = {
       transcript: 'Test transcript',
       summary: 'Test summary',
       segments: [],
@@ -216,9 +224,6 @@ describe('CLI', () => {
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 
       expect(mockSummarizeVideo).toHaveBeenCalledWith(validUrl, {
-        language: undefined,
-        provider: undefined,
-        apiKey: undefined,
         summary: {
           style: undefined,
           maxLength: undefined
@@ -254,24 +259,27 @@ describe('CLI', () => {
     });
 
     it('should handle output option', async () => {
-      mockSaveSummary.mockResolvedValueOnce('output.txt');
+      const outputPath = 'output.txt';
+      mockSaveSummary.mockResolvedValueOnce(outputPath);
 
       await program.parseAsync([
         'node', 'test', 'summarize', validUrl,
-        '--output', 'output.txt'
+        '--output', outputPath,
+        '--language', 'es',
+        '--provider', 'claude',
+        '--style', 'concise'
       ]);
 
       expect(mockSaveSummary).toHaveBeenCalledWith(validUrl, {
-        language: undefined,
-        outputPath: 'output.txt',
-        provider: undefined,
-        apiKey: undefined,
+        language: 'es',
+        provider: 'claude',
+        outputPath,
         summary: {
-          style: undefined,
+          style: 'concise',
           maxLength: undefined
         }
       });
-      expect(mockConsoleLog).toHaveBeenCalledWith('Summary saved to:', 'output.txt');
+      expect(mockConsoleLog).toHaveBeenCalledWith('Summary saved to:', outputPath);
     });
 
     it('should handle TranscriptError', async () => {

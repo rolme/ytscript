@@ -1,6 +1,8 @@
 export interface AIOptions {
   provider?: string;
   apiKey?: string;
+  language?: string;
+  summary?: SummaryOptions;
   options?: Record<string, unknown>;
 }
 
