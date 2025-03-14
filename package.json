@@ -10,8 +10,8 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/cli.ts",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "NODE_NO_WARNINGS=1 jest",
+    "test:watch": "NODE_NO_WARNINGS=1 jest --watch",
     "prepare": "npm run build",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -43,14 +43,17 @@
   "homepage": "https://github.com/rolme/ytscript#readme",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@types/node": "^20.0.0",
     "commander": "^11.0.0",
+    "dotenv": "^16.4.7",
+    "openai": "^4.87.3",
     "typescript": "~5.5.0",
     "youtube-dl-exec": "^3.0.19",
     "youtube-transcript": "^1.0.6"
   },
   "devDependencies": {
-    "@types/jest": "^29.0.0",
+    "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.56.0",
