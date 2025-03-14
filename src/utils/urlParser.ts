@@ -1,4 +1,4 @@
-import { TranscriptError } from '../types';
+import { TranscriptError } from '../types/transcript';
 
 export function extractVideoId(url: string): string {
   const patterns = [

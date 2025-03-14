@@ -1,5 +1,5 @@
 import youtubeDl from 'youtube-dl-exec';
-import { TranscriptError } from '../types';
+import { TranscriptError } from '../types/transcript';
 
 export async function getVideoTitle(videoId: string): Promise<string> {
   try {
@@ -18,4 +18,4 @@ export async function getVideoTitle(videoId: string): Promise<string> {
     const message = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new TranscriptError(`Failed to fetch video title: ${message}`);
   }
-} 
+}
