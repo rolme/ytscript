@@ -9,7 +9,7 @@ function cleanText(text: string): string {
     .replace(/&amp;amp;/g, '&')
     .replace(/&amp;lt;/g, '<')
     .replace(/&amp;gt;/g, '>')
-    .replace(/\%$/, ''); // Remove trailing % if exists
+    .replace(/%$/, ''); // Remove trailing % if exists
 }
 
 export async function saveToFile(content: string, title: string, outputPath?: string): Promise<string> {

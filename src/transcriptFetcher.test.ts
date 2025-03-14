@@ -1,4 +1,6 @@
-import { getTranscript, saveTranscript } from './transcriptFetcher';
+/// <reference types="jest" />
+
+import { getTranscript } from './transcriptFetcher';
 import { TranscriptError } from './types';
 import { YoutubeTranscript } from 'youtube-transcript';
 
@@ -11,7 +13,7 @@ jest.mock('youtube-transcript', () => ({
 
 // Mock the file handler
 jest.mock('./utils/fileHandler', () => ({
-  saveToFile: jest.fn().mockImplementation((content) => Promise.resolve('transcript.txt'))
+  saveToFile: jest.fn().mockImplementation(() => Promise.resolve('transcript.txt'))
 }));
 
 describe('Transcript Fetcher', () => {
