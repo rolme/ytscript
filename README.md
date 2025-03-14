@@ -1,14 +1,18 @@
 # @rolme/ytscript
 
-A powerful CLI tool and Node.js package for downloading and summarizing YouTube video transcripts.
+A powerful CLI tool and Node.js package for downloading and summarizing YouTube video transcripts using AI (ChatGPT and Claude).
 
 ## Features
 
 - Download transcripts from YouTube videos
-- Summarize transcripts using AI (ChatGPT or Claude)
+- Generate AI-powered summaries using:
+  - OpenAI's ChatGPT for concise, accurate summaries
+  - Anthropic's Claude for detailed, nuanced analysis
+- Customize summary style (concise or detailed)
+- Control summary length and format
 - Support for multiple languages
 - Both CLI and programmatic usage
-- Customizable summary styles and lengths
+- Flexible output options (console or file)
 
 ## Installation
 
@@ -34,17 +38,17 @@ ytscript download https://youtube.com/watch?v=xxx -o transcript.txt
 ### Summarize Transcript
 
 ```bash
-# Basic usage (uses ChatGPT by default)
+# Basic usage with ChatGPT
 ytscript summarize https://youtube.com/watch?v=xxx
 
-# Use Claude with detailed summary
+# Use Claude with detailed summary style
 ytscript summarize https://youtube.com/watch?v=xxx -p claude -s detailed
 
-# Customize summary length
-ytscript summarize https://youtube.com/watch?v=xxx -m 1000
+# ChatGPT with concise summary and max length
+ytscript summarize https://youtube.com/watch?v=xxx -p chatgpt -s concise -m 500
 
-# Save to specific file with language preference
-ytscript summarize https://youtube.com/watch?v=xxx -l en -o summary.txt
+# Save Claude summary to file with language preference
+ytscript summarize https://youtube.com/watch?v=xxx -p claude -l en -o summary.txt
 ```
 
 ### CLI Options
@@ -151,3 +155,21 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 MIT
+
+## AI Provider Features
+
+### ChatGPT (OpenAI)
+
+- Ideal for concise, to-the-point summaries
+- Great for technical content and factual accuracy
+- Supports multiple summary styles:
+  - `concise`: Brief, focused summaries
+  - `detailed`: Comprehensive analysis with key points
+
+### Claude (Anthropic)
+
+- Excellent for nuanced, contextual understanding
+- Strong at capturing subtle details and themes
+- Summary styles available:
+  - `concise`: Clear, efficient summaries
+  - `detailed`: In-depth analysis with context
