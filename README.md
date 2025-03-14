@@ -1,5 +1,11 @@
 # @rolme/ytscript
 
+[![npm version](https://img.shields.io/npm/v/@rolme/ytscript.svg)](https://www.npmjs.com/package/@rolme/ytscript)
+[![License](https://img.shields.io/npm/l/@rolme/ytscript.svg)](https://github.com/rolme/ytscript/blob/main/LICENSE)
+[![Build Status](https://github.com/rolme/ytscript/workflows/CI/badge.svg)](https://github.com/rolme/ytscript/actions)
+[![npm downloads](https://img.shields.io/npm/dm/@rolme/ytscript.svg)](https://www.npmjs.com/package/@rolme/ytscript)
+[![node version](https://img.shields.io/node/v/@rolme/ytscript.svg)](https://www.npmjs.com/package/@rolme/ytscript)
+
 A powerful CLI tool and Node.js package for downloading and summarizing YouTube video transcripts using AI (ChatGPT and Claude).
 
 ## Features
