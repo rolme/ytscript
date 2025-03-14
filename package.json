@@ -10,8 +10,8 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/cli.ts",
-    "test": "NODE_NO_WARNINGS=1 jest",
-    "test:watch": "NODE_NO_WARNINGS=1 jest --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "prepare": "npm run build",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -50,7 +50,9 @@
     "openai": "^4.87.3",
     "typescript": "~5.5.0",
     "youtube-dl-exec": "^3.0.19",
-    "youtube-transcript": "^1.0.6"
+    "youtube-transcript": "^1.0.6",
+    "lru-cache": "^10.0.0",
+    "glob": "^10.3.10"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -59,7 +61,8 @@
     "eslint": "^8.56.0",
     "jest": "^29.0.0",
     "ts-jest": "^29.0.0",
-    "ts-node": "^10.0.0"
+    "ts-node": "^10.0.0",
+    "rimraf": "^5.0.5"
   },
   "engines": {
     "node": ">=18.0.0"
