@@ -14,7 +14,11 @@
     "test:watch": "jest --watch",
     "prepare": "npm run build",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "youtube",
@@ -23,9 +27,20 @@
     "cli",
     "captions",
     "download",
-    "video"
+    "video",
+    "youtube-transcript",
+    "youtube-subtitles",
+    "youtube-captions"
   ],
-  "author": "",
+  "author": "Roland Me",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rolme/ytscript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rolme/ytscript/issues"
+  },
+  "homepage": "https://github.com/rolme/ytscript#readme",
   "license": "MIT",
   "dependencies": {
     "@types/node": "^20.0.0",
@@ -45,5 +60,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "files": [
+    "dist/**/*"
+  ]
 }
