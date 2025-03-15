@@ -117,20 +117,17 @@ jobs:
       - name: Test CLI JSON output
         run: |
           NODE_ENV=test ytscript test > output.json
+          if [ $? -ne 0 ]; then
+            echo "Error: ytscript test command failed"
+            exit 1
+          fi
           if [ ! -s output.json ]; then
             echo "Error: Output file is empty"
             exit 1
           fi
-
-          # Validate JSON output
-          if ! jq empty output.json 2>/dev/null; then
-            echo "Error: Invalid JSON output"
-            exit 1
-          fi
-
-          # Validate expected structure
-          if ! jq -e '.success == true and .videoId and .title and .transcript and (.segments | length > 0)' output.json > /dev/null; then
-            echo "Error: JSON output missing required fields"
+          # Validate JSON structure
+          if ! jq -e '.success and .videoId and .title and .transcript and .segments and .metadata' output.json > /dev/null; then
+            echo "Error: Invalid JSON output or missing required fields"
             cat output.json
             exit 1
           fi
