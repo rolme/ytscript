@@ -1,8 +1,8 @@
 import { YoutubeTranscript } from 'youtube-transcript';
-import { TranscriptOptions, TranscriptResult, TranscriptError } from '../../types/transcript';
-import { validateUrl, extractVideoId } from '../../utils/urlParser';
-import { saveToFile } from '../../utils/fileHandler';
-import { getVideoTitle } from '../../utils/titleFetcher';
+import { TranscriptOptions, TranscriptResult, TranscriptError } from '../../types/transcript.js';
+import { validateUrl, extractVideoId } from '../../utils/urlParser.js';
+import { saveToFile } from '../../utils/fileHandler.js';
+import { getVideoTitle } from '../../utils/titleFetcher.js';
 
 export async function getTranscript(url: string, options: TranscriptOptions = {}): Promise<TranscriptResult> {
   if (!validateUrl(url)) {

@@ -1,14 +1,14 @@
-export { getTranscript, saveTranscript } from './services/transcript';
-export { TranscriptOptions, TranscriptResult, TranscriptSegment, TranscriptError } from './types/transcript';
-export { AIOptions, SummaryOptions, AIError } from './types/ai';
-export { SummaryResult, SummaryService } from './services/summary';
+export { getTranscript, saveTranscript } from './services/transcript/index.js';
+export { TranscriptOptions, TranscriptResult, TranscriptSegment, TranscriptError } from './types/transcript.js';
+export { AIOptions, SummaryOptions, AIError } from './types/ai.js';
+export { SummaryResult, SummaryService } from './services/summary.js';
 
-import { getTranscript } from './services/transcript';
-import { SummaryService, SummaryResult } from './services/summary';
-import { AIOptions, SummaryOptions } from './types/ai';
-import { TranscriptOptions } from './types/transcript';
-import { saveToFile } from './utils/fileHandler';
-import { getVideoTitle } from './utils/titleFetcher';
+import { getTranscript } from './services/transcript/index.js';
+import { SummaryService, SummaryResult } from './services/summary.js';
+import { AIOptions, SummaryOptions } from './types/ai.js';
+import { TranscriptOptions } from './types/transcript.js';
+import { saveToFile } from './utils/fileHandler.js';
+import { getVideoTitle } from './utils/titleFetcher.js';
 
 export interface VideoOptions extends AIOptions, TranscriptOptions {
   summary?: SummaryOptions;

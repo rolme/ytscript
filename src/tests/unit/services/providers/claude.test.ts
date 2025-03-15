@@ -1,14 +1,15 @@
-import { ClaudeProvider } from '../../../../services/providers/claude';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ClaudeProvider } from '../../../../services/providers/claude.js';
 
-const mockCreate = jest.fn();
+const mockCreate = vi.fn();
 const mockClient = {
   messages: {
     create: mockCreate
   }
 };
 
-jest.mock('@anthropic-ai/sdk', () => ({
-  Anthropic: jest.fn().mockImplementation(() => mockClient)
+vi.mock('@anthropic-ai/sdk', () => ({
+  Anthropic: vi.fn().mockImplementation(() => mockClient)
 }));
 
 describe('ClaudeProvider', () => {
@@ -16,7 +17,7 @@ describe('ClaudeProvider', () => {
   let provider: ClaudeProvider;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     provider = new ClaudeProvider(mockApiKey);
   });
 

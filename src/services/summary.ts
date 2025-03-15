@@ -1,6 +1,6 @@
-import { AIOptions, SummaryOptions, AIError } from '../types/ai';
-import { AIProviderFactory } from './providers/factory';
-import { TranscriptResult } from '../types/transcript';
+import { AIOptions, SummaryOptions, AIError } from '../types/ai.js';
+import { AIProviderFactory } from './providers/factory.js';
+import { TranscriptResult } from '../types/transcript.js';
 
 export interface SummaryResult extends TranscriptResult {
   summary: string;

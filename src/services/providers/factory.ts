@@ -1,6 +1,6 @@
-import { AIProvider, AIOptions, AIError } from '../../types/ai';
-import { ChatGPTProvider } from './chatgpt';
-import { ClaudeProvider } from './claude';
+import { AIProvider, AIOptions, AIError } from '../../types/ai.js';
+import { ChatGPTProvider } from './chatgpt.js';
+import { ClaudeProvider } from './claude.js';
 
 export class AIProviderFactory {
   static create(options: AIOptions): AIProvider {

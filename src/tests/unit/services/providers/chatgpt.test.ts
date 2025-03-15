@@ -1,6 +1,7 @@
-import { ChatGPTProvider } from '../../../../services/providers/chatgpt';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ChatGPTProvider } from '../../../../services/providers/chatgpt.js';
 
-const mockCreate = jest.fn();
+const mockCreate = vi.fn();
 const mockClient = {
   chat: {
     completions: {
@@ -9,8 +10,8 @@ const mockClient = {
   }
 };
 
-jest.mock('openai', () => ({
-  OpenAI: jest.fn().mockImplementation(() => mockClient)
+vi.mock('openai', () => ({
+  OpenAI: vi.fn().mockImplementation(() => mockClient)
 }));
 
 describe('ChatGPTProvider', () => {
@@ -18,7 +19,7 @@ describe('ChatGPTProvider', () => {
   let provider: ChatGPTProvider;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     provider = new ChatGPTProvider(mockApiKey);
   });
 

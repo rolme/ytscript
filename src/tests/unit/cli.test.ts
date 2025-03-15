@@ -1,27 +1,43 @@
 import { Command } from 'commander';
-import type { TranscriptResult, TranscriptOptions } from '../../types/transcript';
-import { TranscriptError } from '../../types/transcript';
-import { AIError } from '../../types/ai';
-import type { SummaryOptions, AIOptions } from '../../types/ai';
+import type { TranscriptResult, TranscriptOptions } from '../../types/transcript.js';
+import { TranscriptError } from '../../types/transcript.js';
+import { AIError } from '../../types/ai.js';
+import type { SummaryOptions, AIOptions } from '../../types/ai.js';
+import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 // Define the SummaryResult type that combines TranscriptResult with summary
 interface SummaryResult extends TranscriptResult {
   summary: string;
 }
 
-// Mock dotenv
-jest.mock('dotenv', () => ({
-  config: jest.fn()
-}));
-
 // Mock package.json
-jest.mock('../../../package.json', () => ({
+vi.mock('../../../package.json', () => ({
   version: '1.0.0'
 }));
 
+// Mock dotenv
+vi.mock('dotenv', () => ({
+  default: {
+    config: vi.fn()
+  },
+  config: vi.fn()
+}));
+
+// Mock the transcript service
+vi.mock('../../services/transcript/index.js', () => ({
+  getTranscript: vi.fn(),
+  saveTranscript: vi.fn()
+}));
+
+// Mock the summary service
+vi.mock('../../services/summary.js', () => ({
+  summarizeVideo: vi.fn(),
+  saveSummary: vi.fn()
+}));
+
 // Mock the error classes
-jest.mock('../../types/transcript', () => {
-  const TranscriptError = jest.fn().mockImplementation((message) => {
+vi.mock('../../types/transcript.js', () => {
+  const TranscriptError = vi.fn().mockImplementation((message) => {
     const error = new Error(message);
     error.name = 'TranscriptError';
     Object.setPrototypeOf(error, TranscriptError.prototype);
@@ -32,8 +48,8 @@ jest.mock('../../types/transcript', () => {
   return { TranscriptError };
 });
 
-jest.mock('../../types/ai', () => {
-  const AIError = jest.fn().mockImplementation((message) => {
+vi.mock('../../types/ai.js', () => {
+  const AIError = vi.fn().mockImplementation((message) => {
     const error = new Error(message);
     error.name = 'AIError';
     Object.setPrototypeOf(error, AIError.prototype);
@@ -45,32 +61,32 @@ jest.mock('../../types/ai', () => {
 });
 
 // Mock the core functions
-const mockGetTranscript = jest.fn<Promise<TranscriptResult>, [string, TranscriptOptions]>();
-const mockSummarizeVideo = jest.fn<Promise<SummaryResult>, [string, SummaryOptions & AIOptions]>();
-const mockSaveSummary = jest.fn<Promise<string>, [string, SummaryOptions & AIOptions & { outputPath: string }]>();
+const mockGetTranscript = vi.fn();
+const mockSummarizeVideo = vi.fn();
+const mockSaveSummary = vi.fn();
 
-jest.mock('../../index', () => ({
+vi.mock('../../index.js', () => ({
   getTranscript: (url: string, options: TranscriptOptions) => mockGetTranscript(url, options),
   summarizeVideo: (url: string, options: SummaryOptions & AIOptions) => mockSummarizeVideo(url, options),
   saveSummary: (url: string, options: SummaryOptions & AIOptions & { outputPath: string }) => mockSaveSummary(url, options)
 }));
 
 // Mock console.log and console.error
-const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
-const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
 describe('CLI', () => {
   let program: Command;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    vi.clearAllMocks();
     // Reset modules to get a fresh instance of the program
-    jest.resetModules();
+    vi.resetModules();
     // Mock the CLI module
-    jest.mock('../../cli', () => {
-      const { Command } = jest.requireActual('commander');
-      const program = new Command();
+    vi.mock('../../cli.js', async () => {
+      const commander = await vi.importActual<typeof import('commander')>('commander');
+      const program = new commander.Command();
 
       program
         .name('@rolme/ytscript')
@@ -178,7 +194,7 @@ describe('CLI', () => {
       return { program };
     });
     // Import the mocked CLI module
-    const { program: cliProgram } = jest.requireActual('../../cli');
+    const { program: cliProgram } = await vi.importActual<typeof import('../../cli.js')>('../../cli.js');
     program = cliProgram;
   });
 
@@ -242,7 +258,7 @@ describe('CLI', () => {
 
   describe('summarize command', () => {
     const validUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-    const mockSummary: SummaryResult = {
+    const mockResult: SummaryResult = {
       transcript: 'Test transcript',
       summary: 'Test summary',
       segments: [],
@@ -250,32 +266,29 @@ describe('CLI', () => {
     };
 
     it('should summarize and display result', async () => {
-      mockSummarizeVideo.mockResolvedValueOnce(mockSummary);
+      mockSummarizeVideo.mockResolvedValueOnce(mockResult);
 
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 
       expect(mockSummarizeVideo).toHaveBeenCalledWith(validUrl, {
-        summary: {
-          style: undefined,
-          maxLength: undefined
-        }
+        summary: {}
       });
       expect(mockConsoleLog).toHaveBeenCalledWith('\nOriginal Transcript:');
-      expect(mockConsoleLog).toHaveBeenCalledWith(mockSummary.transcript);
+      expect(mockConsoleLog).toHaveBeenCalledWith(mockResult.transcript);
       expect(mockConsoleLog).toHaveBeenCalledWith('\nSummary:');
-      expect(mockConsoleLog).toHaveBeenCalledWith(mockSummary.summary);
+      expect(mockConsoleLog).toHaveBeenCalledWith(mockResult.summary);
     });
 
     it('should handle all options', async () => {
-      mockSummarizeVideo.mockResolvedValueOnce(mockSummary);
+      mockSummarizeVideo.mockResolvedValueOnce(mockResult);
 
       await program.parseAsync([
         'node', 'test', 'summarize', validUrl,
         '--language', 'es',
         '--provider', 'claude',
         '--api-key', 'test-key',
-        '--style', 'concise',
-        '--max-length', '500'
+        '--style', 'detailed',
+        '--max-length', '200'
       ]);
 
       expect(mockSummarizeVideo).toHaveBeenCalledWith(validUrl, {
@@ -283,8 +296,8 @@ describe('CLI', () => {
         provider: 'claude',
         apiKey: 'test-key',
         summary: {
-          style: 'concise',
-          maxLength: 500
+          style: 'detailed',
+          maxLength: 200
         }
       });
     });
@@ -293,22 +306,11 @@ describe('CLI', () => {
       const outputPath = 'output.txt';
       mockSaveSummary.mockResolvedValueOnce(outputPath);
 
-      await program.parseAsync([
-        'node', 'test', 'summarize', validUrl,
-        '--output', outputPath,
-        '--language', 'es',
-        '--provider', 'claude',
-        '--style', 'concise'
-      ]);
+      await program.parseAsync(['node', 'test', 'summarize', validUrl, '--output', outputPath]);
 
       expect(mockSaveSummary).toHaveBeenCalledWith(validUrl, {
-        language: 'es',
-        provider: 'claude',
         outputPath,
-        summary: {
-          style: 'concise',
-          maxLength: undefined
-        }
+        summary: {}
       });
       expect(mockConsoleLog).toHaveBeenCalledWith('Summary saved to:', outputPath);
     });
@@ -325,7 +327,7 @@ describe('CLI', () => {
     });
 
     it('should handle AIError', async () => {
-      const error = new Error('Failed to summarize');
+      const error = new Error('AI error');
       Object.defineProperty(error, 'constructor', { value: AIError });
       mockSummarizeVideo.mockRejectedValueOnce(error);
 

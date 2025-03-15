@@ -1,25 +1,25 @@
-import '@jest/globals';
-import { SummaryService } from '../../../services/summary';
-import { AIProviderFactory } from '../../../services/providers/factory';
-import { AIProvider, AIOptions, SummaryOptions } from '../../../types/ai';
-import { TranscriptResult, TranscriptSegment } from '../../../types/transcript';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { SummaryService } from '../../../services/summary.js';
+import { AIProviderFactory } from '../../../services/providers/factory.js';
+import { AIProvider, AIOptions, SummaryOptions } from '../../../types/ai.js';
+import { TranscriptResult, TranscriptSegment } from '../../../types/transcript.js';
 
-jest.mock('../../../services/providers/factory');
+vi.mock('../../../services/providers/factory.js');
 
 describe('SummaryService', () => {
   let service: SummaryService;
-  let mockProvider: jest.Mocked<AIProvider>;
+  let mockProvider: AIProvider;
 
   beforeEach(() => {
     mockProvider = {
-      summarize: jest.fn()
+      summarize: vi.fn()
     };
 
-    (AIProviderFactory.create as jest.Mock).mockReturnValue(mockProvider);
+    (AIProviderFactory.create as ReturnType<typeof vi.fn>).mockReturnValue(mockProvider);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('summarizeTranscript', () => {
@@ -37,7 +37,7 @@ describe('SummaryService', () => {
     const mockSummary = 'Test summary';
 
     beforeEach(() => {
-      mockProvider.summarize.mockResolvedValue(mockSummary);
+      (mockProvider.summarize as ReturnType<typeof vi.fn>).mockResolvedValue(mockSummary);
     });
 
     it('should summarize transcript with default options', async () => {
@@ -90,7 +90,7 @@ describe('SummaryService', () => {
     it('should handle provider errors', async () => {
       service = new SummaryService();
       const error = new Error('Provider error');
-      mockProvider.summarize.mockRejectedValue(error);
+      (mockProvider.summarize as ReturnType<typeof vi.fn>).mockRejectedValue(error);
       await expect(service.summarizeTranscript(mockTranscript)).rejects.toThrow('Summarization failed: Provider error');
     });
   });
