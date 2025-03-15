@@ -1,26 +1,18 @@
-# Source
+# Source files
 src/
 tests/
 
-# Development configs
-.github/
+# Config files
 .eslintrc.json
-jest.config.js
-tsconfig.json
-
-# Git
-.git/
 .gitignore
+tsconfig.json
+vitest.config.ts
 
-# IDE
+# Development files
+.git/
+.github/
 .vscode/
-.idea/
-
-# Logs
-*.log
-npm-debug.log*
-
-# Test coverage
+docs/
 coverage/
 
 # Development dependencies

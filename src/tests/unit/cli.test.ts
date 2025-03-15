@@ -1,9 +1,10 @@
 import { Command } from 'commander';
-import type { TranscriptResult, TranscriptOptions } from '../../types/transcript.js';
+import type { TranscriptResult } from '../../types/transcript.js';
 import { TranscriptError } from '../../types/transcript.js';
 import { AIError } from '../../types/ai.js';
-import type { SummaryOptions, AIOptions } from '../../types/ai.js';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { getTranscript } from '../../services/transcript/index.js';
+import { summarizeVideo, saveSummary } from '../../index.js';
 
 // Define the SummaryResult type that combines TranscriptResult with summary
 interface SummaryResult extends TranscriptResult {
@@ -25,51 +26,39 @@ vi.mock('dotenv', () => ({
 
 // Mock the transcript service
 vi.mock('../../services/transcript/index.js', () => ({
-  getTranscript: vi.fn(),
-  saveTranscript: vi.fn()
+  getTranscript: vi.fn()
 }));
 
-// Mock the summary service
-vi.mock('../../services/summary.js', () => ({
+// Mock the index module
+vi.mock('../../index.js', () => ({
   summarizeVideo: vi.fn(),
   saveSummary: vi.fn()
 }));
 
-// Mock the error classes
-vi.mock('../../types/transcript.js', () => {
-  const TranscriptError = vi.fn().mockImplementation((message) => {
-    const error = new Error(message);
-    error.name = 'TranscriptError';
-    Object.setPrototypeOf(error, TranscriptError.prototype);
-    return error;
-  });
-  TranscriptError.prototype = Object.create(Error.prototype);
-  TranscriptError.prototype.constructor = TranscriptError;
-  return { TranscriptError };
-});
-
-vi.mock('../../types/ai.js', () => {
-  const AIError = vi.fn().mockImplementation((message) => {
-    const error = new Error(message);
-    error.name = 'AIError';
-    Object.setPrototypeOf(error, AIError.prototype);
-    return error;
-  });
-  AIError.prototype = Object.create(Error.prototype);
-  AIError.prototype.constructor = AIError;
-  return { AIError };
-});
-
-// Mock the core functions
-const mockGetTranscript = vi.fn();
-const mockSummarizeVideo = vi.fn();
-const mockSaveSummary = vi.fn();
-
-vi.mock('../../index.js', () => ({
-  getTranscript: (url: string, options: TranscriptOptions) => mockGetTranscript(url, options),
-  summarizeVideo: (url: string, options: SummaryOptions & AIOptions) => mockSummarizeVideo(url, options),
-  saveSummary: (url: string, options: SummaryOptions & AIOptions & { outputPath: string }) => mockSaveSummary(url, options)
+// Mock the transcript types module
+vi.mock('../../types/transcript.js', () => ({
+  TranscriptError: class extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'TranscriptError';
+    }
+  }
 }));
+
+// Mock the AI types module
+vi.mock('../../types/ai.js', () => ({
+  AIError: class extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'AIError';
+    }
+  }
+}));
+
+// Import the mocked functions
+const mockGetTranscript = vi.mocked(getTranscript);
+const mockSummarizeVideo = vi.mocked(summarizeVideo);
+const mockSaveSummary = vi.mocked(saveSummary);
 
 // Mock console.log and console.error
 const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -83,118 +72,8 @@ describe('CLI', () => {
     vi.clearAllMocks();
     // Reset modules to get a fresh instance of the program
     vi.resetModules();
-    // Mock the CLI module
-    vi.mock('../../cli.js', async () => {
-      const commander = await vi.importActual<typeof import('commander')>('commander');
-      const program = new commander.Command();
-
-      program
-        .name('@rolme/ytscript')
-        .description('CLI tool to download and summarize YouTube video transcripts')
-        .version('1.0.0');
-
-      program
-        .command('download')
-        .description('Download transcript from a YouTube video')
-        .argument('<url>', 'YouTube video URL')
-        .option('-l, --language <code>', 'Language code (e.g., en, es, fr)')
-        .option('-o, --output <path>', 'Output file path')
-        .action(async (url: string, options: { language?: string; output?: string }) => {
-          try {
-            const result = await mockGetTranscript(url, {
-              language: options.language,
-              output: options.output
-            } as TranscriptOptions);
-            console.log('Transcript downloaded successfully!');
-            if (options.output) {
-              console.log(`Saved to: ${options.output}`);
-            } else {
-              console.log(result.transcript);
-            }
-          } catch (error) {
-            if (error instanceof Error) {
-              const err = error as Error;
-              if (err.name === 'TranscriptError' || err instanceof TranscriptError) {
-                console.error('Failed to download transcript:', err.message);
-              } else {
-                console.error('Unexpected error:', err.message);
-              }
-            } else {
-              console.error('Unknown error occurred');
-            }
-            process.exit(1);
-          }
-        });
-
-      program
-        .command('summarize')
-        .description('Download and summarize a YouTube video transcript')
-        .argument('<url>', 'YouTube video URL')
-        .option('-l, --language <code>', 'Language code (e.g., en, es, fr)')
-        .option('-o, --output <path>', 'Output file path')
-        .option('-p, --provider <n>', 'AI provider (chatgpt or claude)')
-        .option('-k, --api-key <key>', 'AI provider API key')
-        .option('-s, --style <style>', 'Summary style (concise or detailed)')
-        .option('-m, --max-length <number>', 'Maximum length of the summary')
-        .action(async (url: string, options: {
-          language?: string;
-          output?: string;
-          provider?: string;
-          apiKey?: string;
-          style?: string;
-          maxLength?: string;
-        }) => {
-          try {
-            const maxLength = options.maxLength ? parseInt(options.maxLength, 10) : undefined;
-            
-            if (options.output) {
-              const filePath = await mockSaveSummary(url, {
-                language: options.language,
-                provider: options.provider,
-                apiKey: options.apiKey,
-                outputPath: options.output,
-                summary: {
-                  style: options.style as 'concise' | 'detailed',
-                  maxLength
-                }
-              });
-              console.log('Summary saved to:', filePath);
-            } else {
-              const result = await mockSummarizeVideo(url, {
-                language: options.language,
-                provider: options.provider,
-                apiKey: options.apiKey,
-                summary: {
-                  style: options.style as 'concise' | 'detailed',
-                  maxLength
-                }
-              });
-              console.log('\nOriginal Transcript:');
-              console.log(result.transcript);
-              console.log('\nSummary:');
-              console.log(result.summary);
-            }
-          } catch (error) {
-            if (error instanceof Error) {
-              const err = error as Error;
-              if (err.name === 'TranscriptError' || err instanceof TranscriptError) {
-                console.error('Failed to download transcript:', err.message);
-              } else if (err.name === 'AIError' || err instanceof AIError) {
-                console.error('Failed to generate summary:', err.message);
-              } else {
-                console.error('Unexpected error:', err.message);
-              }
-            } else {
-              console.error('Unknown error occurred');
-            }
-            process.exit(1);
-          }
-        });
-
-      return { program };
-    });
     // Import the mocked CLI module
-    const { program: cliProgram } = await vi.importActual<typeof import('../../cli.js')>('../../cli.js');
+    const { program: cliProgram } = await import('../../cli.js');
     program = cliProgram;
   });
 
@@ -235,13 +114,12 @@ describe('CLI', () => {
     });
 
     it('should handle TranscriptError', async () => {
-      const error = new Error('Failed to fetch');
-      Object.defineProperty(error, 'constructor', { value: TranscriptError });
+      const error = new TranscriptError('Failed to fetch');
       mockGetTranscript.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'download', validUrl]);
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Unexpected error:', error.message);
+      expect(mockConsoleError).toHaveBeenCalledWith('Failed to download transcript:', error.message);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
@@ -266,12 +144,21 @@ describe('CLI', () => {
     };
 
     it('should summarize and display result', async () => {
-      mockSummarizeVideo.mockResolvedValueOnce(mockResult);
+      mockSummarizeVideo.mockResolvedValueOnce({
+        transcript: 'Test transcript',
+        summary: 'Test summary',
+        videoId: 'test123',
+        provider: 'chatgpt',
+        segments: []
+      });
 
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 
       expect(mockSummarizeVideo).toHaveBeenCalledWith(validUrl, {
-        summary: {}
+        summary: {
+          style: undefined,
+          maxLength: undefined
+        }
       });
       expect(mockConsoleLog).toHaveBeenCalledWith('\nOriginal Transcript:');
       expect(mockConsoleLog).toHaveBeenCalledWith(mockResult.transcript);
@@ -280,12 +167,18 @@ describe('CLI', () => {
     });
 
     it('should handle all options', async () => {
-      mockSummarizeVideo.mockResolvedValueOnce(mockResult);
+      mockSummarizeVideo.mockResolvedValueOnce({
+        transcript: 'Test transcript',
+        summary: 'Test summary',
+        videoId: 'test123',
+        provider: 'chatgpt',
+        segments: []
+      });
 
       await program.parseAsync([
         'node', 'test', 'summarize', validUrl,
         '--language', 'es',
-        '--provider', 'claude',
+        '--provider', 'chatgpt',
         '--api-key', 'test-key',
         '--style', 'detailed',
         '--max-length', '200'
@@ -293,7 +186,7 @@ describe('CLI', () => {
 
       expect(mockSummarizeVideo).toHaveBeenCalledWith(validUrl, {
         language: 'es',
-        provider: 'claude',
+        provider: 'chatgpt',
         apiKey: 'test-key',
         summary: {
           style: 'detailed',
@@ -310,30 +203,31 @@ describe('CLI', () => {
 
       expect(mockSaveSummary).toHaveBeenCalledWith(validUrl, {
         outputPath,
-        summary: {}
+        summary: {
+          style: undefined,
+          maxLength: undefined
+        }
       });
       expect(mockConsoleLog).toHaveBeenCalledWith('Summary saved to:', outputPath);
     });
 
     it('should handle TranscriptError', async () => {
-      const error = new Error('Failed to fetch');
-      Object.defineProperty(error, 'constructor', { value: TranscriptError });
+      const error = new TranscriptError('Failed to fetch');
       mockSummarizeVideo.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Unexpected error:', error.message);
+      expect(mockConsoleError).toHaveBeenCalledWith('Failed to download transcript:', error.message);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     it('should handle AIError', async () => {
-      const error = new Error('AI error');
-      Object.defineProperty(error, 'constructor', { value: AIError });
+      const error = new AIError('AI error');
       mockSummarizeVideo.mockRejectedValueOnce(error);
 
       await program.parseAsync(['node', 'test', 'summarize', validUrl]);
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Unexpected error:', error.message);
+      expect(mockConsoleError).toHaveBeenCalledWith('Failed to generate summary:', error.message);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 

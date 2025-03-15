@@ -10,9 +10,13 @@ const mockClient = {
   }
 };
 
-vi.mock('openai', () => ({
-  OpenAI: vi.fn().mockImplementation(() => mockClient)
-}));
+// Mock OpenAI with default export
+vi.mock('openai', () => {
+  const OpenAI = vi.fn().mockImplementation(() => mockClient);
+  return {
+    default: OpenAI
+  };
+});
 
 describe('ChatGPTProvider', () => {
   const mockApiKey = 'test-api-key';
