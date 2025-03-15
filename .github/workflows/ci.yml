@@ -112,6 +112,8 @@ jobs:
 
       # Test installation in a fresh directory
       - name: Test fresh installation
+        env:
+          NODE_ENV: test
         run: |
           mkdir test-install
           cd test-install
@@ -123,9 +125,11 @@ jobs:
 
       # Test the download command with mock data
       - name: Test CLI JSON output
+        env:
+          NODE_ENV: test
         run: |
           cd test-install
-          NODE_ENV=test npx ytscript test > output.json
+          npx ytscript test > output.json
           if [ $? -ne 0 ]; then
             echo "Error: ytscript test command failed"
             exit 1
