@@ -3,7 +3,14 @@ import { createSummarizeCommand } from './commands/summarize.js';
 import { createTestCommand } from './commands/test.js';
 import { download } from './commands/download.js';
 import dotenv from 'dotenv';
-import packageJson from '../../package.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Get package.json path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf8'));
 
 // Load environment variables from .env file
 dotenv.config();
