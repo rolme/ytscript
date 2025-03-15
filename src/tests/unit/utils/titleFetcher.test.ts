@@ -1,38 +1,37 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getTitleFromUrl } from '../../../utils/titleFetcher.js';
-import { getInfo } from 'ytdl-core';
 
-vi.mock('ytdl-core', () => ({
-  getInfo: vi.fn()
-}));
+vi.mock('ytdl-core', () => {
+  return {
+    default: {
+      getInfo: vi.fn()
+    }
+  };
+});
 
-describe('Title Fetcher Utility', () => {
-  it('should fetch video title from URL', async () => {
+const ytdl = await import('ytdl-core');
+
+describe('getTitleFromUrl', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should fetch the video title from a URL', async () => {
     const mockTitle = 'Test Video Title';
-    const mockVideoId = 'dQw4w9WgXcQ';
-    const url = `https://www.youtube.com/watch?v=${mockVideoId}`;
-
-    (getInfo as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-      videoDetails: {
-        title: mockTitle
-      }
+    (ytdl.default.getInfo as ReturnType<typeof vi.fn>).mockResolvedValue({
+      videoDetails: { title: mockTitle }
     });
 
-    const title = await getTitleFromUrl(url);
-    expect(title).toBe(mockTitle);
-    expect(getInfo).toHaveBeenCalledWith(mockVideoId);
+    const result = await getTitleFromUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    expect(result).toBe(mockTitle);
   });
 
-  it('should throw error for invalid YouTube URL', async () => {
-    const url = 'https://example.com/video';
-    await expect(getTitleFromUrl(url)).rejects.toThrow('Invalid YouTube URL');
+  it('should throw an error for invalid YouTube URL', async () => {
+    await expect(getTitleFromUrl('invalid-url')).rejects.toThrow('Invalid YouTube URL');
   });
 
-  it('should throw error when ytdl-core fails', async () => {
-    const url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-    const error = new Error('Failed to fetch video info');
-    (getInfo as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(error);
-
-    await expect(getTitleFromUrl(url)).rejects.toThrow(error);
+  it('should handle failures from ytdl-core', async () => {
+    (ytdl.default.getInfo as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('API Error'));
+    await expect(getTitleFromUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).rejects.toThrow('Failed to fetch video title');
   });
 }); 

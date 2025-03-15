@@ -1,47 +1,93 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getTranscript } from '../../../../services/transcript/index.js';
 import { TranscriptError } from '../../../../types/transcript.js';
-import { YoutubeTranscript } from 'youtube-transcript';
+import type { VideoInfo } from 'ytdl-core';
 
-// Mock the youtube-transcript module
-vi.mock('youtube-transcript', () => ({
-  YoutubeTranscript: {
-    fetchTranscript: vi.fn()
-  }
-}));
+vi.mock('ytdl-core', () => {
+  return {
+    default: {
+      getInfo: vi.fn()
+    }
+  };
+});
 
-// Mock the file handler
-vi.mock('../../../../utils/fileHandler.js', () => ({
-  saveToFile: vi.fn().mockImplementation(() => Promise.resolve('transcript.txt'))
-}));
+const ytdl = await import('ytdl-core');
 
 describe('Transcript Service', () => {
   const mockTranscriptData = [
-    { text: 'First line', duration: 1000, offset: 0 },
-    { text: 'Second line', duration: 1000, offset: 1000 }
+    { text: 'First line', duration: 1, offset: 0 },
+    { text: 'Second line', duration: 1, offset: 1 }
   ];
+
+  const mockCaptionTrack = {
+    baseUrl: 'https://example.com/captions',
+    languageCode: 'en',
+    name: { simpleText: 'English' }
+  };
+
+  const mockVideoInfo: Partial<VideoInfo> = {
+    player_response: {
+      captions: {
+        playerCaptionsTracklistRenderer: {
+          captionTracks: [mockCaptionTrack]
+        }
+      }
+    }
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn();
   });
 
   describe('getTranscript', () => {
     it('should fetch and format transcript correctly', async () => {
-      (YoutubeTranscript.fetchTranscript as ReturnType<typeof vi.fn>).mockResolvedValue(mockTranscriptData);
+      (ytdl.default.getInfo as ReturnType<typeof vi.fn>).mockResolvedValue(mockVideoInfo);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(
+          `<transcript>
+            <text start="0" dur="1">First line</text>
+            <text start="1" dur="1">Second line</text>
+          </transcript>`
+        )
+      });
 
       const result = await getTranscript('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 
-      expect(result.transcript).toBe('First line\nSecond line');
+      expect(result.transcript).toBe('First line Second line');
       expect(result.segments).toEqual(mockTranscriptData);
-      expect(YoutubeTranscript.fetchTranscript).toHaveBeenCalledWith('dQw4w9WgXcQ', { lang: undefined });
+      expect(ytdl.default.getInfo).toHaveBeenCalledWith('dQw4w9WgXcQ');
     });
 
     it('should handle language option', async () => {
-      (YoutubeTranscript.fetchTranscript as ReturnType<typeof vi.fn>).mockResolvedValue(mockTranscriptData);
+      const mockSpanishTrack = {
+        ...mockCaptionTrack,
+        languageCode: 'es'
+      };
+
+      (ytdl.default.getInfo as ReturnType<typeof vi.fn>).mockResolvedValue({
+        player_response: {
+          captions: {
+            playerCaptionsTracklistRenderer: {
+              captionTracks: [mockSpanishTrack]
+            }
+          }
+        }
+      });
+
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(
+          `<transcript>
+            <text start="0" dur="1">Primera línea</text>
+            <text start="1" dur="1">Segunda línea</text>
+          </transcript>`
+        )
+      });
 
       await getTranscript('https://www.youtube.com/watch?v=dQw4w9WgXcQ', { language: 'es' });
-
-      expect(YoutubeTranscript.fetchTranscript).toHaveBeenCalledWith('dQw4w9WgXcQ', { lang: 'es' });
+      expect(ytdl.default.getInfo).toHaveBeenCalledWith('dQw4w9WgXcQ');
     });
 
     it('should throw TranscriptError for invalid URLs', async () => {
@@ -49,8 +95,7 @@ describe('Transcript Service', () => {
     });
 
     it('should handle API errors', async () => {
-      (YoutubeTranscript.fetchTranscript as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('API Error'));
-
+      (ytdl.default.getInfo as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('API Error'));
       await expect(
         getTranscript('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
       ).rejects.toThrow(TranscriptError);
