@@ -1,29 +1,31 @@
 import { Command } from 'commander';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
-import { createDownloadCommand } from './commands/download.js';
 import { createSummarizeCommand } from './commands/summarize.js';
 import { createTestCommand } from './commands/test.js';
+import { download } from './commands/download.js';
 import dotenv from 'dotenv';
+import packageJson from '../../package.json' assert { type: 'json' };
 
 // Load environment variables from .env file
 dotenv.config();
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const packageJson = JSON.parse(
-  readFileSync(join(__dirname, '../../package.json'), 'utf8')
-);
 
 export function createCli(): Command {
   const program = new Command();
 
   program
-    .name('ytscript')
-    .description('CLI tool to download YouTube transcripts and generate summaries')
+    .name(packageJson.name)
+    .description('CLI tool for downloading YouTube video transcripts')
     .version(packageJson.version);
 
-  program.addCommand(createDownloadCommand());
+  program
+    .command('download')
+    .description('Download transcript from a YouTube video')
+    .argument('<url>', 'YouTube video URL')
+    .option('-l, --language <code>', 'Language code (e.g., en, es, fr)')
+    .option('-o, --output <path>', 'Output file path')
+    .action(async (url: string, options: { language?: string; output?: string }) => {
+      await download(url, options);
+    });
+
   program.addCommand(createSummarizeCommand());
   if (process.env.NODE_ENV === 'test') {
     program.addCommand(createTestCommand());
