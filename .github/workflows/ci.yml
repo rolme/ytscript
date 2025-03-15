@@ -103,13 +103,18 @@ jobs:
           ytscript --version
           ytscript --help
 
+      # Create package for testing
+      - name: Create package
+        run: npm pack
+
       # Test installation in a fresh directory
       - name: Test fresh installation
         run: |
           mkdir test-install
           cd test-install
           npm init -y
-          npm install ${{ github.workspace }}
+          # Install the locally built package
+          npm install ../rolme-ytscript-2.0.0.tgz
           npx ytscript --version
           npx ytscript --help
 
