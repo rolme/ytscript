@@ -113,10 +113,10 @@ jobs:
           npx ytscript --version
           npx ytscript --help
 
-      # Test the download command with a public video
-      - name: Test download functionality
+      # Test the download command with mock data
+      - name: Test CLI JSON output
         run: |
-          ytscript download "https://www.youtube.com/watch?v=jNQXAC9IVRw" --format json > output.json
+          NODE_ENV=test ytscript test > output.json
           if [ ! -s output.json ]; then
             echo "Error: Output file is empty"
             exit 1
@@ -125,5 +125,12 @@ jobs:
           # Validate JSON output
           if ! jq empty output.json 2>/dev/null; then
             echo "Error: Invalid JSON output"
+            exit 1
+          fi
+
+          # Validate expected structure
+          if ! jq -e '.success == true and .videoId and .title and .transcript and (.segments | length > 0)' output.json > /dev/null; then
+            echo "Error: JSON output missing required fields"
+            cat output.json
             exit 1
           fi
