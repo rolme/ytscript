@@ -12,7 +12,7 @@
     "start": "ts-node src/cli.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "prepare": "npm run build",
+    "prepare": "GITHUB_TOKEN=${GITHUB_TOKEN} npm run build",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "prepublishOnly": "npm test && npm run lint",
