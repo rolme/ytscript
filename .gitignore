@@ -58,5 +58,10 @@ transcripts/
 temp/
 .cache/
 
+# Documentation
+docs/*
+!docs/specs/
+!docs/specs/**
+
 # Documentation (work in progress)
 docs/ 
