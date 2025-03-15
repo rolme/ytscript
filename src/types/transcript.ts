@@ -15,6 +15,11 @@ export interface TranscriptResult {
   videoId: string;
 }
 
+export interface TranscriptResponse {
+  transcript: string;
+  error: string | null;
+}
+
 export class TranscriptError extends Error {
   constructor(message: string) {
     super(message);

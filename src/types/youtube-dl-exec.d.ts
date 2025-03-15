@@ -1,22 +1,27 @@
 declare module 'youtube-dl-exec' {
-  interface YoutubeDlOutput {
-    title: string;
-    description?: string;
-    duration?: number;
-    upload_date?: string;
-    uploader?: string;
-    view_count?: number;
-    [key: string]: unknown;
+  interface SubtitleItem {
+    text: string;
+    duration: number;
+    start: number;
   }
 
   interface YoutubeDlOptions {
-    skipDownload?: boolean;
     dumpSingleJson?: boolean;
-    format?: string;
-    output?: string;
-    [key: string]: unknown;
+    noWarnings?: boolean;
+    noCallHome?: boolean;
+    noCheckCertificate?: boolean;
+    preferFreeFormats?: boolean;
+    youtubeSkipDashManifest?: boolean;
+    writeSub?: boolean;
+    writeAutoSub?: boolean;
+    subLang?: string;
+    skipDownload?: boolean;
   }
 
-  function youtubeDl(url: string, options?: YoutubeDlOptions): Promise<YoutubeDlOutput>;
-  export = youtubeDl;
+  interface YoutubeDlResponse {
+    subtitles: Record<string, SubtitleItem[]>;
+    automatic_captions: Record<string, SubtitleItem[]>;
+  }
+
+  export default function youtubeDl(url: string, options?: YoutubeDlOptions): Promise<YoutubeDlResponse>;
 } 

@@ -19,6 +19,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:install": "chmod +x scripts/test-install.sh && ./scripts/test-install.sh",
     "start": "node dist/cli.js",
     "prepare": "npm run build",
     "lint": "eslint . --ext .ts",
@@ -59,8 +60,9 @@
     "openai": "^4.87.3",
     "typescript": "~5.5.0",
     "youtube-dl-exec": "^3.0.19",
-    "youtube-transcript": "^1.0.6",
-    "ytdl-core": "^4.11.5"
+    "youtube-transcript": "^1.2.1",
+    "youtube-transcript-api": "^1.1.2",
+    "ytdl-core": "npm:@distube/ytdl-core@^4.16.4"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
