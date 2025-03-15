@@ -69,11 +69,11 @@ jobs:
           mkdir package-check
           cd package-check
 
-          # Pack the package
-          npm pack ..
+          # Pack the package and get the filename
+          PACKAGE_FILE=$(npm pack .. | tail -n 1)
 
           # Extract the package
-          tar -xzf *.tgz
+          tar -xzf "$PACKAGE_FILE"
 
           # Check package size
           PACKAGE_SIZE=$(du -sk package | cut -f1)
@@ -105,7 +105,10 @@ jobs:
 
       # Create package for testing
       - name: Create package
-        run: npm pack
+        run: |
+          # Pack the package and store the filename
+          PACKAGE_FILE=$(npm pack | tail -n 1)
+          echo "PACKAGE_FILE=$PACKAGE_FILE" >> $GITHUB_ENV
 
       # Test installation in a fresh directory
       - name: Test fresh installation
@@ -114,7 +117,7 @@ jobs:
           cd test-install
           npm init -y
           # Install the locally built package
-          npm install ../rolme-ytscript-2.0.0.tgz
+          npm install "../${{ env.PACKAGE_FILE }}"
           npx ytscript --version
           npx ytscript --help
 
