@@ -63,31 +63,87 @@ ytscript summarize https://youtube.com/watch?v=xxx -p claude -l en -o summary.tx
 
 - `-l, --language <code>`: Language code (e.g., en, es, fr)
 - `-o, --output <path>`: Output file path
+- `-f, --format <format>`: Output format (text or json)
 
 #### Summarize Command
 
 - `-l, --language <code>`: Language code (e.g., en, es, fr)
 - `-o, --output <path>`: Output file path
-- `-p, --provider <name>`: AI provider (chatgpt or claude)
+- `-p, --provider <n>`: AI provider (chatgpt or claude)
 - `-k, --api-key <key>`: AI provider API key
 - `-s, --style <style>`: Summary style (concise or detailed)
 - `-m, --max-length <number>`: Maximum length of the summary
+- `-f, --format <format>`: Output format (text or json)
+
+### Output Formats
+
+#### Text Format (Default)
+
+The default text format outputs the transcript or summary directly to the console or file.
+
+#### JSON Format
+
+Using `--format json` outputs structured data in JSON format:
+
+For download command:
+
+```json
+{
+  "videoId": "xxx",
+  "title": "Video Title",
+  "transcript": "Full transcript text",
+  "segments": [
+    {
+      "text": "Segment text",
+      "duration": 10.5,
+      "offset": 0
+    }
+  ],
+  "metadata": {
+    "language": "en",
+    "lastUpdated": "2024-03-14T12:00:00Z"
+  }
+}
+```
+
+For summarize command:
+
+```json
+{
+  "videoId": "xxx",
+  "title": "Video Title",
+  "transcript": "Original transcript",
+  "summary": "AI-generated summary",
+  "metadata": {
+    "language": "en",
+    "provider": "chatgpt",
+    "style": "concise",
+    "lastUpdated": "2024-03-14T12:00:00Z"
+  }
+}
+```
 
 ## Programmatic Usage
 
 ### Basic Usage
 
 ```typescript
-import { getTranscript, summarizeVideo } from "@rolme/ytscript";
+import { getTranscript, summarizeVideo, OutputFormat } from "@rolme/ytscript";
 
-// Download transcript
-const result = await getTranscript("https://youtube.com/watch?v=xxx");
-console.log(result.transcript);
+// Download transcript with JSON output
+const result = await getTranscript("https://youtube.com/watch?v=xxx", {
+  format: OutputFormat.JSON,
+});
+console.log(result.transcript); // Access transcript text
+console.log(result.segments); // Access transcript segments
 
-// Summarize video
-const summary = await summarizeVideo("https://youtube.com/watch?v=xxx");
+// Summarize video with JSON output
+const summary = await summarizeVideo("https://youtube.com/watch?v=xxx", {
+  format: OutputFormat.JSON,
+});
 console.log(summary.transcript); // Original transcript
 console.log(summary.summary); // AI-generated summary
+console.log(summary.metadata); // Access metadata
 ```
 
 ### Advanced Usage
