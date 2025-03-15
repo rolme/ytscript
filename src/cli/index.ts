@@ -22,7 +22,8 @@ export function createCli(): Command {
     .argument('<url>', 'YouTube video URL')
     .option('-l, --language <code>', 'Language code (e.g., en, es, fr)')
     .option('-o, --output <path>', 'Output file path')
-    .action(async (url: string, options: { language?: string; output?: string }) => {
+    .option('-f, --format <format>', 'Output format (text or json)', 'text')
+    .action(async (url: string, options: { language?: string; output?: string; format?: string }) => {
       await download(url, options);
     });
 
