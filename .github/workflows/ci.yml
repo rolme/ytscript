@@ -116,7 +116,8 @@ jobs:
       # Test the download command with mock data
       - name: Test CLI JSON output
         run: |
-          NODE_ENV=test ytscript test > output.json
+          cd test-install
+          NODE_ENV=test npx ytscript test > output.json
           if [ $? -ne 0 ]; then
             echo "Error: ytscript test command failed"
             exit 1
