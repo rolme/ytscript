@@ -5,37 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2024-03-14
+## [2.0.1] - 2024-03-14
 
 ### Added
 
-- JSON output format support for both download and summarize commands
-- `--format` option to specify output format (text or json)
-- Structured JSON output with success/error status
-- Test command for CI environment
-- Installation test script for local development
-- Comprehensive CI workflow for testing package installation
-- Type definitions for external dependencies
+- JSON output format support with new `--format json` option
+- Structured JSON output for both download and summarize commands
+- Improved error handling and output formatting
+- Enhanced TypeScript type definitions for JSON output
 
 ### Changed
 
-- Refactored CLI architecture to use modular command structure
-- Improved error handling with consistent error responses
-- Enhanced output formatting for both text and JSON modes
-- Updated documentation with new format options
+- Refactored CLI architecture for better modularity
+- Updated documentation with JSON format examples
+- Improved package structure and build process
 
 ### Fixed
 
-- Improved package structure and file organization
-- Better type safety with additional TypeScript definitions
-- More reliable installation process
+- Package structure to include all necessary files
+- TypeScript definitions and build configuration
+- Installation test reliability in CI environment
 
 ## [1.0.0] - 2024-03-01
 
 ### Added
 
 - Initial release
-- Basic transcript download functionality
-- AI-powered summary generation
+- Download transcripts from YouTube videos
+- Generate AI-powered summaries using ChatGPT and Claude
 - Support for multiple languages
-- CLI interface with basic commands
+- Flexible output options
+- Both CLI and programmatic usage
