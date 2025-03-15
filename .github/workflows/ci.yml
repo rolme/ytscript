@@ -39,3 +39,91 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run lint
+
+  installation-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      # Test local installation
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Check package size and contents
+      - name: Check package contents
+        run: |
+          # Create a temporary directory for package check
+          mkdir package-check
+          cd package-check
+
+          # Pack the package
+          npm pack ..
+
+          # Extract the package
+          tar -xzf *.tgz
+
+          # Check package size
+          PACKAGE_SIZE=$(du -sk package | cut -f1)
+          if [ $PACKAGE_SIZE -gt 10000 ]; then
+            echo "Warning: Package size exceeds 10MB"
+            exit 1
+          fi
+
+          # Check for required files
+          cd package
+          if [ ! -f "package.json" ] || [ ! -d "dist" ] || [ ! -f "README.md" ]; then
+            echo "Error: Missing required files in package"
+            exit 1
+          fi
+
+          # Check dist directory contents
+          if [ ! -f "dist/cli.js" ] || [ ! -f "dist/index.js" ] || [ ! -f "dist/index.d.ts" ]; then
+            echo "Error: Missing required files in dist directory"
+            exit 1
+          fi
+
+          cd ../..
+
+      - name: Test local installation
+        run: |
+          npm link
+          ytscript --version
+          ytscript --help
+
+      # Test installation in a fresh directory
+      - name: Test fresh installation
+        run: |
+          mkdir test-install
+          cd test-install
+          npm init -y
+          npm install ${{ github.workspace }}
+          npx ytscript --version
+          npx ytscript --help
+
+      # Test the download command with a public video
+      - name: Test download functionality
+        run: |
+          ytscript download "https://www.youtube.com/watch?v=jNQXAC9IVRw" --format json > output.json
+          if [ ! -s output.json ]; then
+            echo "Error: Output file is empty"
+            exit 1
+          fi
+
+          # Validate JSON output
+          if ! jq empty output.json 2>/dev/null; then
+            echo "Error: Invalid JSON output"
+            exit 1
+          fi
