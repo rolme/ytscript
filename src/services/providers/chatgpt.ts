@@ -1,57 +1,81 @@
-import OpenAI from 'openai';
-import { AIProvider, SummaryOptions, AIError } from '../../types/ai.js';
+import { AIProvider, AIError, SummaryOptions } from '../../types/ai.js';
+
+interface ChatGPTResponse {
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
+}
 
 export class ChatGPTProvider implements AIProvider {
-  private client: OpenAI;
-  private defaultMaxTokens = 500;
+  readonly name = 'chatgpt';
+  private apiKey: string;
 
-  constructor(apiKey?: string) {
+  constructor(apiKey: string) {
     if (!apiKey) {
-      throw new AIError('OpenAI API key is required');
+      throw new Error('OpenAI API key is required');
     }
-    this.client = new OpenAI({ apiKey });
+    this.apiKey = apiKey;
   }
 
-  async summarize(text: string, options: SummaryOptions = {}): Promise<string> {
+  async summarize(transcript: string, options: SummaryOptions = {}): Promise<string> {
     try {
-      const { style = 'concise', maxLength = this.defaultMaxTokens } = options;
+      const prompt = this.buildPrompt(transcript, options);
+      const result = await this.callOpenAI(prompt);
 
-      const prompt = style === 'detailed'
-        ? 'Provide a detailed summary of the following transcript:'
-        : 'Provide a concise summary of the following transcript:';
+      if (!result?.choices?.[0]?.message?.content) {
+        throw new Error('Invalid response from OpenAI API');
+      }
 
-      const response = await this.client.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+      return result.choices[0].message.content;
+    } catch (error) {
+      throw new AIError(error instanceof Error ? error.message : 'Failed to generate summary');
+    }
+  }
+
+  private buildPrompt(transcript: string, options: SummaryOptions): string {
+    const style = options.style || 'concise';
+    const maxLength = options.maxLength ? `Keep the summary under ${options.maxLength} characters.` : '';
+
+    return `
+      Summarize the following transcript in a ${style} manner. ${maxLength}
+      Focus on the key points and main ideas.
+
+      Transcript:
+      ${transcript}
+    `.trim();
+  }
+
+  private async callOpenAI(prompt: string): Promise<ChatGPTResponse> {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
             role: 'system',
-            content: prompt,
+            content: 'You are a helpful assistant that summarizes video transcripts accurately and concisely.'
           },
           {
             role: 'user',
-            content: text,
-          },
+            content: prompt
+          }
         ],
-        max_tokens: maxLength,
-        temperature: 0.7,
-      });
+        temperature: 0.3,
+        max_tokens: 500
+      }),
+    });
 
-      return response.choices[0]?.message?.content || '';
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new AIError(`ChatGPT API error: ${error.message}`);
-      }
-      throw new AIError('ChatGPT API error: Unknown error');
+    if (!response.ok) {
+      throw new Error(`OpenAI API request failed: ${response.statusText}`);
     }
-  }
 
-  private buildPrompt(text: string, style: string): string {
-    const basePrompt = `Please summarize the following YouTube video transcript:\n\n${text}\n\n`;
-    
-    if (style === 'detailed') {
-      return basePrompt + 'Provide a detailed summary including key points, main ideas, and important details.';
-    }
-    
-    return basePrompt + 'Provide a concise summary capturing the main points.';
+    const data = await response.json() as ChatGPTResponse;
+    return data;
   }
 } 

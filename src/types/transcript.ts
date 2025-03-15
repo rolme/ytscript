@@ -1,5 +1,9 @@
+import type { VideoInfo } from 'ytdl-core';
+import type { OutputFormat } from './output.js';
+
 export interface TranscriptOptions {
-  language?: string;
+  lang?: string;
+  format?: OutputFormat;
   outputPath?: string;
 }
 
@@ -15,15 +19,13 @@ export interface TranscriptResult {
   videoId: string;
 }
 
-export interface TranscriptResponse {
-  transcript: string;
-  error: string | null;
+export interface TranscriptService {
+  getTranscript(videoInfo: VideoInfo, options?: TranscriptOptions): Promise<TranscriptResult>;
 }
 
 export class TranscriptError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'TranscriptError';
-    Object.setPrototypeOf(this, TranscriptError.prototype);
   }
 } 

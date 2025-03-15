@@ -1,121 +1,130 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ClaudeProvider } from '../../../../services/providers/claude.js';
-
-const mockCreate = vi.fn();
-const mockClient = {
-  messages: {
-    create: mockCreate
-  }
-};
-
-vi.mock('@anthropic-ai/sdk', () => ({
-  Anthropic: vi.fn().mockImplementation(() => mockClient)
-}));
+import { AIError } from '../../../../types/ai.js';
 
 describe('ClaudeProvider', () => {
-  const mockApiKey = 'test-api-key';
   let provider: ClaudeProvider;
 
   beforeEach(() => {
+    provider = new ClaudeProvider('test-anthropic-key');
     vi.clearAllMocks();
-    provider = new ClaudeProvider(mockApiKey);
+    global.fetch = vi.fn() as unknown as typeof fetch;
   });
 
   describe('initialization', () => {
-    it('should throw error if API key is not provided', () => {
-      expect(() => new ClaudeProvider('')).toThrow('Anthropic API key is required');
+    it('should create instance with API key', () => {
+      expect(provider).toBeInstanceOf(ClaudeProvider);
+      expect(provider.name).toBe('claude');
     });
 
-    it('should create instance with valid API key', () => {
-      expect(provider).toBeInstanceOf(ClaudeProvider);
+    it('should throw error if API key is missing', () => {
+      expect(() => new ClaudeProvider('')).toThrow('Anthropic API key is required');
     });
   });
 
   describe('summarize', () => {
-    it('should return summary for concise style', async () => {
-      mockCreate.mockResolvedValueOnce({
-        content: [{ type: 'text', text: 'Test summary' }]
+    const mockTranscript = 'Sample transcript for summarization';
+    const mockResponse = {
+      content: [
+        {
+          text: 'Generated summary of the video'
+        }
+      ]
+    };
+
+    it('should generate summary successfully with default options', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      }) as unknown as typeof fetch;
+
+      const result = await provider.summarize(mockTranscript);
+      expect(result).toBe(mockResponse.content[0].text);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.anthropic.com/v1/messages',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'x-api-key': 'test-anthropic-key',
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json',
+            'anthropic-client': 'ytscript/2.0.2'
+          },
+          body: expect.stringContaining('concise')
+        })
+      );
+    });
+
+    it('should use provided style and length options', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
       });
 
-      const result = await provider.summarize('Test text');
-      expect(result).toBe('Test summary');
-      expect(mockCreate).toHaveBeenCalledWith({
+      await provider.summarize(mockTranscript, {
+        style: 'detailed',
+        maxLength: 1000
+      });
+
+      const requestBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+      expect(requestBody.messages[0].content).toContain('detailed');
+      expect(requestBody.messages[0].content).toContain('1000');
+    });
+
+    it('should handle API errors gracefully', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Rate limit exceeded'
+      });
+
+      await expect(provider.summarize(mockTranscript)).rejects.toThrow(AIError);
+    });
+
+    it('should handle network errors', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network Error'));
+      await expect(provider.summarize(mockTranscript)).rejects.toThrow(AIError);
+    });
+
+    it('should handle invalid API response', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ content: [] })
+      });
+
+      await expect(provider.summarize(mockTranscript)).rejects.toThrow('Invalid response from Claude API');
+    });
+
+    it('should use correct model and parameters', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      });
+
+      await provider.summarize(mockTranscript);
+
+      const requestBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+      expect(requestBody).toEqual(expect.objectContaining({
         model: 'claude-3-opus-20240229',
-        max_tokens: 500,
-        messages: [
-          { role: 'user', content: 'Provide a concise summary of the following transcript:\n\nTest text' }
-        ]
-      });
+        max_tokens: 1000,
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user'
+          })
+        ])
+      }));
     });
 
-    it('should return summary for detailed style', async () => {
-      mockCreate.mockResolvedValueOnce({
-        content: [{ type: 'text', text: 'Detailed summary' }]
+    it('should include key points instruction in prompt', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
       });
 
-      const result = await provider.summarize('Test text', { style: 'detailed' });
-      expect(result).toBe('Detailed summary');
-      expect(mockCreate).toHaveBeenCalledWith({
-        model: 'claude-3-opus-20240229',
-        max_tokens: 500,
-        messages: [
-          { role: 'user', content: 'Provide a detailed summary of the following transcript:\n\nTest text' }
-        ]
-      });
-    });
+      await provider.summarize(mockTranscript);
 
-    it('should handle API errors', async () => {
-      mockCreate.mockRejectedValueOnce(new Error('API error'));
-      await expect(provider.summarize('Test text')).rejects.toThrow('Claude API error: API error');
-    });
-
-    it('should handle invalid response format', async () => {
-      mockCreate.mockResolvedValueOnce({
-        content: []
-      });
-      await expect(provider.summarize('Test text')).rejects.toThrow('Invalid response from Claude API');
-    });
-
-    it('should handle non-text content', async () => {
-      mockCreate.mockResolvedValueOnce({
-        content: [{ type: 'image', url: 'test.jpg' }]
-      });
-      await expect(provider.summarize('Test text')).rejects.toThrow('Invalid response from Claude API');
-    });
-
-    describe('configuration', () => {
-      it('should respect maxLength option', async () => {
-        mockCreate.mockResolvedValueOnce({
-          content: [{ type: 'text', text: 'Test summary' }]
-        });
-
-        await provider.summarize('Test text', { maxLength: 200 });
-        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-          max_tokens: 200
-        }));
-      });
-
-      it('should use correct model', async () => {
-        mockCreate.mockResolvedValueOnce({
-          content: [{ type: 'text', text: 'Test summary' }]
-        });
-
-        await provider.summarize('Test text');
-        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-          model: 'claude-3-opus-20240229'
-        }));
-      });
-
-      it('should use default maxLength when not specified', async () => {
-        mockCreate.mockResolvedValueOnce({
-          content: [{ type: 'text', text: 'Test summary' }]
-        });
-
-        await provider.summarize('Test text');
-        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-          max_tokens: 500
-        }));
-      });
+      const requestBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+      expect(requestBody.messages[0].content).toContain('Focus on extracting the key points and main ideas');
     });
   });
 }); 

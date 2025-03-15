@@ -1,6 +1,6 @@
 {
   "name": "@rolme/ytscript",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A CLI tool to download YouTube transcripts and generate summaries",
   "type": "module",
   "main": "./dist/index.js",
@@ -53,15 +53,11 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@types/node": "^20.0.0",
+    "axios": "^1.8.3",
     "commander": "^11.0.0",
     "dotenv": "^16.4.7",
-    "glob": "^10.3.10",
-    "lru-cache": "^10.0.0",
     "openai": "^4.87.3",
     "typescript": "~5.5.0",
-    "youtube-dl-exec": "^3.0.19",
-    "youtube-transcript": "^1.2.1",
-    "youtube-transcript-api": "^1.1.2",
     "ytdl-core": "npm:@distube/ytdl-core@^4.16.4"
   },
   "devDependencies": {

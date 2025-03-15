@@ -12,6 +12,7 @@ describe('SummaryService', () => {
 
   beforeEach(() => {
     mockProvider = {
+      name: 'google',
       summarize: vi.fn()
     };
 
@@ -46,19 +47,19 @@ describe('SummaryService', () => {
       expect(result).toEqual({
         ...mockTranscript,
         summary: mockSummary,
-        provider: 'chatgpt'
+        provider: 'google'
       });
       expect(mockProvider.summarize).toHaveBeenCalledWith(mockTranscript.transcript, {});
     });
 
-    it('should use specified provider', async () => {
-      const options: AIOptions = { provider: 'claude' };
+    it('should use specified API key', async () => {
+      const options: AIOptions = { apiKey: 'test-google-key' };
       service = new SummaryService(options);
       const result = await service.summarizeTranscript(mockTranscript);
       expect(result).toEqual({
         ...mockTranscript,
         summary: mockSummary,
-        provider: 'claude'
+        provider: 'google'
       });
       expect(AIProviderFactory.create).toHaveBeenCalledWith(options);
     });
@@ -70,7 +71,7 @@ describe('SummaryService', () => {
       expect(result).toEqual({
         ...mockTranscript,
         summary: mockSummary,
-        provider: 'chatgpt'
+        provider: 'google'
       });
       expect(mockProvider.summarize).toHaveBeenCalledWith(mockTranscript.transcript, options);
     });
@@ -82,7 +83,7 @@ describe('SummaryService', () => {
       expect(result).toEqual({
         ...mockTranscript,
         summary: mockSummary,
-        provider: 'chatgpt'
+        provider: 'google'
       });
       expect(mockProvider.summarize).toHaveBeenCalledWith(mockTranscript.transcript, options);
     });
@@ -92,6 +93,14 @@ describe('SummaryService', () => {
       const error = new Error('Provider error');
       (mockProvider.summarize as ReturnType<typeof vi.fn>).mockRejectedValue(error);
       await expect(service.summarizeTranscript(mockTranscript)).rejects.toThrow('Summarization failed: Provider error');
+    });
+
+    it('should handle missing API key', async () => {
+      const options: AIOptions = { apiKey: '' };
+      (AIProviderFactory.create as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
+        throw new Error('Google API key is required. Set GOOGLE_API_KEY environment variable or provide it in options.');
+      });
+      expect(() => new SummaryService(options)).toThrow('Google API key is required. Set GOOGLE_API_KEY environment variable or provide it in options.');
     });
   });
 }); 

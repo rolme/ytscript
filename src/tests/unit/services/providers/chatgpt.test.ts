@@ -1,134 +1,129 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChatGPTProvider } from '../../../../services/providers/chatgpt.js';
-
-const mockCreate = vi.fn();
-const mockClient = {
-  chat: {
-    completions: {
-      create: mockCreate
-    }
-  }
-};
-
-// Mock OpenAI with default export
-vi.mock('openai', () => {
-  const OpenAI = vi.fn().mockImplementation(() => mockClient);
-  return {
-    default: OpenAI
-  };
-});
+import { AIError } from '../../../../types/ai.js';
 
 describe('ChatGPTProvider', () => {
-  const mockApiKey = 'test-api-key';
   let provider: ChatGPTProvider;
 
   beforeEach(() => {
+    provider = new ChatGPTProvider('test-openai-key');
     vi.clearAllMocks();
-    provider = new ChatGPTProvider(mockApiKey);
+    global.fetch = vi.fn() as unknown as typeof fetch;
   });
 
   describe('initialization', () => {
-    it('should throw error if API key is not provided', () => {
-      expect(() => new ChatGPTProvider('')).toThrow('OpenAI API key is required');
+    it('should create instance with API key', () => {
+      expect(provider).toBeInstanceOf(ChatGPTProvider);
+      expect(provider.name).toBe('chatgpt');
     });
 
-    it('should create instance with valid API key', () => {
-      expect(provider).toBeInstanceOf(ChatGPTProvider);
+    it('should throw error if API key is missing', () => {
+      expect(() => new ChatGPTProvider('')).toThrow('OpenAI API key is required');
     });
   });
 
   describe('summarize', () => {
-    it('should return summary for concise style', async () => {
-      mockCreate.mockResolvedValueOnce({
-        choices: [{ message: { content: 'Test summary' } }]
+    const mockTranscript = 'Sample transcript for summarization';
+    const mockResponse = {
+      choices: [
+        {
+          message: {
+            content: 'Generated summary of the video'
+          }
+        }
+      ]
+    };
+
+    it('should generate summary successfully with default options', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
       });
 
-      const result = await provider.summarize('Test text');
-      expect(result).toBe('Test summary');
-      expect(mockCreate).toHaveBeenCalledWith({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'Provide a concise summary of the following transcript:' },
-          { role: 'user', content: 'Test text' }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
+      const result = await provider.summarize(mockTranscript);
+      expect(result).toBe(mockResponse.choices[0].message.content);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.openai.com/v1/chat/completions',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer test-openai-key',
+            'Content-Type': 'application/json',
+          },
+          body: expect.stringContaining('concise')
+        })
+      );
+    });
+
+    it('should use provided style and length options', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      });
+
+      await provider.summarize(mockTranscript, {
+        style: 'detailed',
+        maxLength: 1000
+      });
+
+      const requestBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+      expect(requestBody.messages[1].content).toContain('detailed');
+      expect(requestBody.messages[1].content).toContain('1000');
+    });
+
+    it('should handle API errors gracefully', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Rate limit exceeded'
+      });
+
+      await expect(provider.summarize(mockTranscript)).rejects.toThrow(AIError);
+    });
+
+    it('should handle network errors', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network Error'));
+      await expect(provider.summarize(mockTranscript)).rejects.toThrow(AIError);
+    });
+
+    it('should handle invalid API response', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ choices: [] })
+      });
+
+      await expect(provider.summarize(mockTranscript)).rejects.toThrow('Invalid response from OpenAI API');
+    });
+
+    it('should include system message in API request', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      });
+
+      await provider.summarize(mockTranscript);
+
+      const requestBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+      expect(requestBody.messages[0]).toEqual({
+        role: 'system',
+        content: 'You are a helpful assistant that summarizes video transcripts accurately and concisely.'
       });
     });
 
-    it('should return summary for detailed style', async () => {
-      mockCreate.mockResolvedValueOnce({
-        choices: [{ message: { content: 'Detailed summary' } }]
-      });
+    it('should use correct model and parameters', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      }) as unknown as typeof fetch;
 
-      const result = await provider.summarize('Test text', { style: 'detailed' });
-      expect(result).toBe('Detailed summary');
-      expect(mockCreate).toHaveBeenCalledWith({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'Provide a detailed summary of the following transcript:' },
-          { role: 'user', content: 'Test text' }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      });
-    });
+      await provider.summarize(mockTranscript);
 
-    it('should handle API errors', async () => {
-      mockCreate.mockRejectedValueOnce(new Error('API error'));
-      await expect(provider.summarize('Test text')).rejects.toThrow('ChatGPT API error: API error');
-    });
-
-    it('should handle empty response', async () => {
-      mockCreate.mockResolvedValueOnce({ choices: [] });
-      const result = await provider.summarize('Test text');
-      expect(result).toBe('');
-    });
-
-    describe('configuration', () => {
-      it('should respect maxLength option', async () => {
-        mockCreate.mockResolvedValueOnce({
-          choices: [{ message: { content: 'Test summary' } }]
-        });
-
-        await provider.summarize('Test text', { maxLength: 200 });
-        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-          max_tokens: 200
-        }));
-      });
-
-      it('should use default maxLength when not specified', async () => {
-        mockCreate.mockResolvedValueOnce({
-          choices: [{ message: { content: 'Test summary' } }]
-        });
-
-        await provider.summarize('Test text');
-        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-          max_tokens: 500
-        }));
-      });
-
-      it('should use correct temperature', async () => {
-        mockCreate.mockResolvedValueOnce({
-          choices: [{ message: { content: 'Test summary' } }]
-        });
-
-        await provider.summarize('Test text');
-        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-          temperature: 0.7
-        }));
-      });
-
-      it('should use correct model', async () => {
-        mockCreate.mockResolvedValueOnce({
-          choices: [{ message: { content: 'Test summary' } }]
-        });
-
-        await provider.summarize('Test text');
-        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-          model: 'gpt-3.5-turbo'
-        }));
-      });
+      const requestBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+      expect(requestBody).toEqual(expect.objectContaining({
+        model: 'gpt-4-turbo-preview',
+        temperature: 0.3,
+        max_tokens: 500
+      }));
     });
   });
 }); 

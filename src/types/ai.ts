@@ -1,9 +1,6 @@
 export interface AIOptions {
-  provider?: string;
+  provider?: 'google' | 'chatgpt' | 'claude';
   apiKey?: string;
-  language?: string;
-  summary?: SummaryOptions;
-  options?: Record<string, unknown>;
 }
 
 export interface SummaryOptions {
@@ -12,13 +9,13 @@ export interface SummaryOptions {
 }
 
 export interface AIProvider {
-  summarize(text: string, options?: SummaryOptions): Promise<string>;
+  name: string;
+  summarize(transcript: string, options?: SummaryOptions): Promise<string>;
 }
 
 export class AIError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'AIError';
-    Object.setPrototypeOf(this, AIError.prototype);
   }
 } 
