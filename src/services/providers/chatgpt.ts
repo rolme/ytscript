@@ -33,14 +33,15 @@ export class ChatGPTProvider implements AIProvider {
           },
         ],
         max_tokens: maxLength,
+        temperature: 0.7,
       });
 
       return response.choices[0]?.message?.content || '';
     } catch (error) {
       if (error instanceof Error) {
-        throw new AIError(`Failed to generate summary: ${error.message}`);
+        throw new AIError(`ChatGPT API error: ${error.message}`);
       }
-      throw new AIError('Failed to generate summary');
+      throw new AIError('ChatGPT API error: Unknown error');
     }
   }
 

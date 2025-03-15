@@ -114,5 +114,8 @@ program
     }
   });
 
-// Export the program after all commands are defined
+// Parse command line arguments
+await program.parseAsync(process.argv);
+
+// Export the program for testing
 export { program }; 
