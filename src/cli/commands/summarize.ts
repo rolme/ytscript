@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { getTranscript } from '../../services/transcript/index.js';
-import { TranscriptError } from '../../errors.js';
+import { TranscriptError } from '../../types/transcript.js';
 import ytdl from 'ytdl-core';
 
 interface SummarizeOptions {
@@ -21,7 +21,7 @@ export function createSummarizeCommand(): Command {
           lang: options.language
         });
 
-        console.log('Transcript:', result.text);
+        console.log('Transcript:', result.transcript);
       } catch (error) {
         if (error instanceof TranscriptError) {
           console.error(error.message);
