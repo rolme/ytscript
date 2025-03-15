@@ -1,16 +1,10 @@
 import type { VideoInfo } from 'ytdl-core';
+import type { OutputFormat } from './output.js';
 
 export interface TranscriptOptions {
   lang?: string;
-}
-
-export interface TranscriptResult {
-  text: string;
-  videoId: string;
-}
-
-export interface TranscriptService {
-  getTranscript(videoInfo: VideoInfo, options?: TranscriptOptions): Promise<TranscriptResult>;
+  format?: OutputFormat;
+  outputPath?: string;
 }
 
 export interface TranscriptSegment {
@@ -19,7 +13,19 @@ export interface TranscriptSegment {
   offset: number;
 }
 
-export interface TranscriptResponse {
+export interface TranscriptResult {
   transcript: string;
-  error: string | null;
+  segments: TranscriptSegment[];
+  videoId: string;
+}
+
+export interface TranscriptService {
+  getTranscript(videoInfo: VideoInfo, options?: TranscriptOptions): Promise<TranscriptResult>;
+}
+
+export class TranscriptError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TranscriptError';
+  }
 } 

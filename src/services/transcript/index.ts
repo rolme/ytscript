@@ -1,12 +1,46 @@
 import type { VideoInfo } from 'ytdl-core';
-import type { TranscriptOptions, TranscriptResult } from '../../types/transcript.js';
+import type { TranscriptOptions, TranscriptResult, TranscriptSegment } from '../../types/transcript.js';
 import { TranscriptError } from '../../errors.js';
+
+function parseTimestamp(text: string): { duration: number; offset: number } | null {
+  const match = text.match(/<text start="([0-9.]+)" dur="([0-9.]+)"/);
+  if (!match) return null;
+  return {
+    offset: parseFloat(match[1]),
+    duration: parseFloat(match[2])
+  };
+}
+
+function parseXmlToSegments(xml: string): TranscriptSegment[] {
+  const segments: TranscriptSegment[] = [];
+  const lines = xml.split('\n');
+  
+  for (const line of lines) {
+    const timing = parseTimestamp(line);
+    if (!timing) continue;
+    
+    const text = line
+      .replace(/<\/?[^>]+(>|$)/g, '') // Remove XML tags
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .trim();
+    
+    if (text) {
+      segments.push({
+        text,
+        ...timing
+      });
+    }
+  }
+  
+  return segments;
+}
 
 export async function getTranscript(videoInfo: VideoInfo, options: TranscriptOptions = {}): Promise<TranscriptResult> {
   try {
-    const videoId = videoInfo.videoDetails.videoId;
-    console.log('Video title:', videoInfo.videoDetails.title);
-
     const captions = videoInfo.player_response.captions;
     if (!captions || !captions.playerCaptionsTracklistRenderer) {
       throw new TranscriptError('No captions available for this video');
@@ -17,11 +51,6 @@ export async function getTranscript(videoInfo: VideoInfo, options: TranscriptOpt
       throw new TranscriptError('No caption tracks found');
     }
 
-    console.log('Available captions:', captionTracks.map(track => ({
-      language: track.languageCode,
-      name: track.name.simpleText
-    })));
-
     // Find the requested language or default to English
     const targetLang = options.lang || 'en';
     const caption = captionTracks.find(track => track.languageCode === targetLang);
@@ -30,11 +59,6 @@ export async function getTranscript(videoInfo: VideoInfo, options: TranscriptOpt
       throw new TranscriptError(`No captions found for language: ${targetLang}`);
     }
 
-    console.log('Selected caption:', {
-      language: caption.languageCode,
-      name: caption.name.simpleText
-    });
-
     // Download the caption track
     const response = await fetch(caption.baseUrl);
     if (!response.ok) {
@@ -42,21 +66,13 @@ export async function getTranscript(videoInfo: VideoInfo, options: TranscriptOpt
     }
 
     const xml = await response.text();
-    
-    // Parse the XML to extract just the text
-    const text = xml
-      .replace(/<\/?[^>]+(>|$)/g, '') // Remove XML tags
-      .replace(/&#39;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/\n\s*\n/g, '\n') // Remove empty lines
-      .trim();
+    const segments = parseXmlToSegments(xml);
+    const text = segments.map(s => s.text).join('\n');
 
     return {
-      text,
-      videoId
+      transcript: text,
+      segments,
+      videoId: videoInfo.videoDetails.videoId
     };
   } catch (error: unknown) {
     if (error instanceof TranscriptError) {
