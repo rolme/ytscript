@@ -59,7 +59,8 @@
     "openai": "^4.87.3",
     "typescript": "~5.5.0",
     "youtube-dl-exec": "^3.0.19",
-    "youtube-transcript": "^1.0.6"
+    "youtube-transcript": "^1.0.6",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",

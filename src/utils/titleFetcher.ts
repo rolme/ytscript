@@ -1,5 +1,17 @@
-import youtubeDl from 'youtube-dl-exec';
+import { getVideoId } from './videoId.js';
+import { getInfo } from 'ytdl-core';
 import { TranscriptError } from '../types/transcript.js';
+
+/**
+ * Fetches the title of a YouTube video from its URL
+ * @param url The YouTube video URL
+ * @returns The video title
+ */
+export async function getTitleFromUrl(url: string): Promise<string> {
+  const videoId = getVideoId(url);
+  const info = await getInfo(videoId);
+  return info.videoDetails.title;
+}
 
 export async function getVideoTitle(videoId: string): Promise<string> {
   try {
