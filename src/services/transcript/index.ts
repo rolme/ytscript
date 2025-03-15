@@ -22,7 +22,9 @@ export async function getTranscript(url: string, options: TranscriptOptions = {}
       throw new TranscriptError('No English captions available for this video');
     }
 
-    const response = await fetch(track.baseUrl);
+    // Decode the baseUrl to handle any URI encoding issues
+    const captionUrl = decodeURIComponent(track.baseUrl);
+    const response = await fetch(captionUrl);
     if (!response.ok) {
       throw new TranscriptError(`Failed to fetch transcript: ${response.statusText}`);
     }
