@@ -11,6 +11,16 @@ function parseTimestamp(text: string): { duration: number; offset: number } | nu
   };
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
+}
+
 function parseXmlToSegments(xml: string): TranscriptSegment[] {
   const segments: TranscriptSegment[] = [];
   const lines = xml.split('\n');
@@ -19,18 +29,11 @@ function parseXmlToSegments(xml: string): TranscriptSegment[] {
     const timing = parseTimestamp(line);
     if (!timing) continue;
     
-    const text = line
-      .replace(/<\/?[^>]+(>|$)/g, '') // Remove XML tags
-      .replace(/&#39;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .trim();
+    const text = line.replace(/<\/?[^>]+(>|$)/g, '').trim(); // Remove XML tags
     
     if (text) {
       segments.push({
-        text,
+        text: decodeHtmlEntities(text),
         ...timing
       });
     }
@@ -65,9 +68,27 @@ export async function getTranscript(videoInfo: VideoInfo, options: TranscriptOpt
       throw new TranscriptError(`Failed to download caption track: ${response.statusText}`);
     }
 
-    const xml = await response.text();
-    const segments = parseXmlToSegments(xml);
-    const text = segments.map(s => s.text).join('\n');
+    const rawText = await response.text();
+    let text = '';
+    let segments: TranscriptSegment[] = [];
+
+    // Check if the response is XML by looking for transcript tags
+    const isXml = rawText.includes('<transcript>') && rawText.includes('</transcript>');
+
+    if (isXml) {
+      // Try to parse as XML
+      try {
+        segments = parseXmlToSegments(rawText);
+        text = segments.map(s => s.text).join('\n');
+      } catch (e) {
+        segments = [];
+        text = '';
+      }
+    } else {
+      // Invalid XML or plain text
+      segments = [];
+      text = '';
+    }
 
     return {
       transcript: text,
