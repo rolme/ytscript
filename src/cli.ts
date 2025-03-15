@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { getTranscript, summarizeVideo, saveSummary } from './index.js';
+import { getTranscript } from './services/transcript/index.js';
+import { summarizeVideo, saveSummary } from './index.js';
 import { TranscriptError } from './types/transcript.js';
 import { AIError } from './types/ai.js';
-import { readFile } from 'fs/promises';
-import { version } from '../package.json';
 import dotenv from 'dotenv';
+import { readFile } from 'fs/promises';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-// Load package.json for version
-const packageJson = JSON.parse(
-  await readFile(new URL('../package.json', import.meta.url), 'utf-8')
-);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(await readFile(join(__dirname, '../package.json'), 'utf-8'));
+const { version } = packageJson;
 
 // Load environment variables from .env file
 dotenv.config();

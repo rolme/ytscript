@@ -1,4 +1,4 @@
-import { AIProvider, SummaryOptions, AIError } from '../../types/ai';
+import { AIProvider, SummaryOptions, AIError } from '../../types/ai.js';
 import { Anthropic } from '@anthropic-ai/sdk';
 
 export class ClaudeProvider implements AIProvider {

@@ -1,5 +1,5 @@
 import youtubeDl from 'youtube-dl-exec';
-import { TranscriptError } from '../types/transcript';
+import { TranscriptError } from '../types/transcript.js';
 
 export async function getVideoTitle(videoId: string): Promise<string> {
   try {

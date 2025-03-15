@@ -1,11 +1,11 @@
-import { OpenAI } from 'openai';
-import { AIProvider, SummaryOptions, AIError } from '../../types/ai';
+import OpenAI from 'openai';
+import { AIProvider, SummaryOptions, AIError } from '../../types/ai.js';
 
 export class ChatGPTProvider implements AIProvider {
   private client: OpenAI;
   private defaultMaxTokens = 500;
 
-  constructor(apiKey: string) {
+  constructor(apiKey?: string) {
     if (!apiKey) {
       throw new AIError('OpenAI API key is required');
     }
@@ -23,19 +23,24 @@ export class ChatGPTProvider implements AIProvider {
       const response = await this.client.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: text }
+          {
+            role: 'system',
+            content: prompt,
+          },
+          {
+            role: 'user',
+            content: text,
+          },
         ],
         max_tokens: maxLength,
-        temperature: 0.7
       });
 
       return response.choices[0]?.message?.content || '';
     } catch (error) {
       if (error instanceof Error) {
-        throw new AIError(`ChatGPT API error: ${error.message}`);
+        throw new AIError(`Failed to generate summary: ${error.message}`);
       }
-      throw new AIError('Unknown error occurred while calling ChatGPT API');
+      throw new AIError('Failed to generate summary');
     }
   }
 

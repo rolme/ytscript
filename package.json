@@ -1,7 +1,7 @@
 {
   "name": "@rolme/ytscript",
   "version": "1.0.5",
-  "description": "A CLI tool to download YouTube video transcripts",
+  "description": "A CLI tool to download YouTube transcripts and generate summaries",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,14 +16,12 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "ts-node --esm src/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepare": "GITHUB_TOKEN=${GITHUB_TOKEN} npm run build",
+    "start": "node dist/cli.js",
+    "prepare": "npm run build",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "prepublishOnly": "npm test && npm run lint",
     "preversion": "npm run lint",
     "version": "git add -A src",
     "postversion": "git push && git push --tags"
@@ -31,8 +29,9 @@
   "keywords": [
     "youtube",
     "transcript",
-    "subtitles",
+    "summary",
     "cli",
+    "subtitles",
     "captions",
     "download",
     "video",
@@ -40,7 +39,7 @@
     "youtube-subtitles",
     "youtube-captions"
   ],
-  "author": "Roland Me",
+  "author": "Roland Mejia",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rolme/ytscript.git"
@@ -71,7 +70,7 @@
     "vitest": "^3.0.8"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "files": [
     "dist/**/*"
