@@ -4,9 +4,6 @@ import { getVideoId } from '../../src/utils/videoId.js';
 import { getTranscript } from '../../src/services/transcript/index.js';
 import { download } from '../../src/cli/commands/download.js';
 import ytdl from 'ytdl-core';
-import { createCli } from '../../src/cli/index.js';
-import { TranscriptError } from '../../src/types/transcript.js';
-import type { VideoInfo } from 'ytdl-core';
 
 vi.mock('fs/promises', () => ({
   writeFile: vi.fn().mockResolvedValue(undefined)

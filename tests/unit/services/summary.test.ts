@@ -3,7 +3,6 @@ import { SummaryService } from '../../../src/services/summary.js';
 import { AIProviderFactory } from '../../../src/services/providers/factory.js';
 import { AIProvider, AIOptions, SummaryOptions } from '../../../src/types/ai.js';
 import { TranscriptResult, TranscriptSegment } from '../../../src/types/transcript.js';
-import { AIError } from '../../../src/types/ai.js';
 
 vi.mock('../../../src/services/providers/factory.js');
 
