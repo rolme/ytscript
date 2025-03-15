@@ -64,4 +64,5 @@ docs/*
 !docs/specs/**
 
 # Documentation (work in progress)
-docs/ 
+docs/ transcript_*.json
+transcript_*.txt
