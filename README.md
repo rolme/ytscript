@@ -172,23 +172,57 @@ const filePath = await saveSummary("https://youtube.com/watch?v=xxx", {
 
 ## API Keys
 
-The package supports two AI providers:
+The package requires API keys for YouTube Data API and AI providers. Here's how to obtain them:
 
-1. ChatGPT (OpenAI)
+### YouTube Data API Key
 
-   - Set `OPENAI_API_KEY` environment variable
-   - Or provide via `apiKey` option
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the YouTube Data API v3:
+   - Navigate to "APIs & Services" > "Library"
+   - Search for "YouTube Data API v3"
+   - Click "Enable"
+4. Create credentials:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "API Key"
+5. Set the API key in your environment:
+   ```env
+   YOUTUBE_API_KEY=your-youtube-api-key
+   ```
 
-2. Claude (Anthropic)
-   - Set `ANTHROPIC_API_KEY` environment variable
-   - Or provide via `apiKey` option
+### OpenAI API Key (for ChatGPT)
 
-You can use a `.env` file to store your API keys:
+1. Visit [OpenAI's platform](https://platform.openai.com/)
+2. Sign up or log in to your account
+3. Go to "API Keys" section
+4. Click "Create new secret key"
+5. Set the API key in your environment:
+   ```env
+   OPENAI_API_KEY=your-openai-key
+   ```
+
+### Anthropic API Key (for Claude)
+
+1. Visit [Anthropic's website](https://www.anthropic.com/)
+2. Sign up for API access
+3. Once approved, get your API key from the dashboard
+4. Set the API key in your environment:
+   ```env
+   ANTHROPIC_API_KEY=your-anthropic-key
+   ```
+
+You can store all API keys in a `.env` file:
 
 ```env
+# YouTube Data API v3 configuration
+YOUTUBE_API_KEY=your-youtube-api-key
+
+# AI Provider API Keys
 OPENAI_API_KEY=your-openai-key
 ANTHROPIC_API_KEY=your-anthropic-key
 ```
+
+Note: Keep your API keys secure and never commit them to version control.
 
 ## Error Handling
 
