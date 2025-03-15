@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { validateUrl, getVideoId } from '../../../src/utils/urlParser.js';
-import { TranscriptError } from '../../../src/errors.js';
+import { getVideoId } from '../../../src/utils/videoId.js';
+import { validateUrl } from '../../../src/utils/urlParser.js';
+import { TranscriptError } from '../../../src/types/transcript.js';
 
 describe('urlParser', () => {
   describe('getVideoId', () => {

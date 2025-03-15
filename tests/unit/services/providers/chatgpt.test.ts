@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ChatGPTProvider } from '../../../../services/providers/chatgpt.js';
-import { AIError } from '../../../../types/ai.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ChatGPTProvider } from '../../../../src/services/providers/chatgpt.js';
+import { AIError } from '../../../../src/types/ai.js';
+import { TranscriptResult } from '../../../../src/types/transcript.js';
 
 describe('ChatGPTProvider', () => {
   let provider: ChatGPTProvider;

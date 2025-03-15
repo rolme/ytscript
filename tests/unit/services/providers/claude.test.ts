@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ClaudeProvider } from '../../../../services/providers/claude.js';
-import { AIError } from '../../../../types/ai.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ClaudeProvider } from '../../../../src/services/providers/claude.js';
+import { AIError } from '../../../../src/types/ai.js';
+import { TranscriptResult } from '../../../../src/types/transcript.js';
 
 describe('ClaudeProvider', () => {
   let provider: ClaudeProvider;

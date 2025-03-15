@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SummaryService } from '../../../services/summary.js';
-import { AIProviderFactory } from '../../../services/providers/factory.js';
-import { AIProvider, AIOptions, SummaryOptions } from '../../../types/ai.js';
-import { TranscriptResult, TranscriptSegment } from '../../../types/transcript.js';
+import { SummaryService } from '../../../src/services/summary.js';
+import { AIProviderFactory } from '../../../src/services/providers/factory.js';
+import { AIProvider, AIOptions, SummaryOptions } from '../../../src/types/ai.js';
+import { TranscriptResult, TranscriptSegment } from '../../../src/types/transcript.js';
+import { AIError } from '../../../src/types/ai.js';
 
-vi.mock('../../../services/providers/factory.js');
+vi.mock('../../../src/services/providers/factory.js');
 
 describe('SummaryService', () => {
   let service: SummaryService;
@@ -16,7 +17,7 @@ describe('SummaryService', () => {
       summarize: vi.fn()
     };
 
-    (AIProviderFactory.create as ReturnType<typeof vi.fn>).mockReturnValue(mockProvider);
+    vi.mocked(AIProviderFactory.create).mockReturnValue(mockProvider);
   });
 
   afterEach(() => {

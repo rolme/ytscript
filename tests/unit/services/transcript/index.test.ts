@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getTranscript } from '../../../../services/transcript/index.js';
-import { TranscriptError } from '../../../../errors.js';
+import { getTranscript } from '../../../../src/services/transcript/index.js';
+import { TranscriptError } from '../../../../src/errors.js';
 import type { VideoInfo } from 'ytdl-core';
 
 // Mock ytdl-core
@@ -180,11 +180,11 @@ describe('Transcript Service', () => {
       });
 
       it('should handle fetch errors', async () => {
-        (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(
+        global.fetch = vi.fn().mockRejectedValue(
           new Error('Network Error')
         );
         await expect(getTranscript(mockVideoInfo))
-          .rejects.toThrow(TranscriptError);
+          .rejects.toBeInstanceOf(TranscriptError);
       });
 
       it('should handle non-OK fetch response', async () => {

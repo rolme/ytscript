@@ -1,10 +1,14 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { writeFile, mkdir } from 'fs/promises';
-import { formatAndSaveOutput } from '../../../../services/output/index.js';
-import { TranscriptError } from '../../../../types/transcript.js';
-import { AIError } from '../../../../types/ai.js';
-import { OutputFormat } from '../../../../types/output.js';
+import { formatAndSaveOutput } from '../../../../src/services/output/index.js';
+import { TranscriptError } from '../../../../src/types/transcript.js';
+import { AIError } from '../../../../src/types/ai.js';
+import { OutputFormat } from '../../../../src/types/output.js';
 import { join, dirname } from 'path';
+import { OutputService } from '../../../../src/services/output/index.js';
+import { TranscriptResult } from '../../../../src/types/transcript.js';
+import { writeTranscript } from '../../../../src/services/output/index.js';
+import { SummaryOptions } from '../../../../src/types/ai.js';
 
 vi.mock('fs/promises', () => ({
   writeFile: vi.fn(),

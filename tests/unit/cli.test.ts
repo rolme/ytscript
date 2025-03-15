@@ -1,15 +1,18 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { writeFile } from 'fs/promises';
-import { getVideoId } from '../../utils/videoId.js';
-import { getTranscript } from '../../services/transcript/index.js';
-import { download } from '../../cli/commands/download.js';
+import { getVideoId } from '../../src/utils/videoId.js';
+import { getTranscript } from '../../src/services/transcript/index.js';
+import { download } from '../../src/cli/commands/download.js';
 import ytdl from 'ytdl-core';
+import { createCli } from '../../src/cli/index.js';
+import { TranscriptError } from '../../src/types/transcript.js';
+import type { VideoInfo } from 'ytdl-core';
 
 vi.mock('fs/promises', () => ({
   writeFile: vi.fn().mockResolvedValue(undefined)
 }));
 
-vi.mock('../../utils/videoId.js', () => ({
+vi.mock('../../src/utils/videoId.js', () => ({
   getVideoId: vi.fn().mockReturnValue('test123')
 }));
 
@@ -24,7 +27,7 @@ vi.mock('ytdl-core', () => ({
   }
 }));
 
-vi.mock('../../services/transcript/index.js', () => ({
+vi.mock('../../src/services/transcript/index.js', () => ({
   getTranscript: vi.fn().mockResolvedValue({
     videoId: 'test123',
     transcript: 'Test transcript',

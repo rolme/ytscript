@@ -1,7 +1,7 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { GoogleProvider } from '../../../../services/providers/google.js';
-import { TranscriptError } from '../../../../types/transcript.js';
-import { AIError } from '../../../../types/ai.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { GoogleProvider } from '../../../../src/services/providers/google.js';
+import { AIError } from '../../../../src/types/ai.js';
+import { TranscriptError } from '../../../../src/types/transcript.js';
 
 describe('GoogleProvider', () => {
   let provider: GoogleProvider;
