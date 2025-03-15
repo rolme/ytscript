@@ -50,12 +50,14 @@ export class ClaudeProvider implements AIProvider {
       method: 'POST',
       headers: {
         'x-api-key': this.apiKey,
-        'anthropic-version': '2024-01-01',
+        'anthropic-version': '2023-06-01',
+        'anthropic-client': 'ytscript/2.0.2',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'claude-3-opus-20240229',
         max_tokens: 1000,
+        system: 'You are a helpful assistant that summarizes video transcripts accurately and concisely.',
         messages: [
           {
             role: 'user',
@@ -66,7 +68,8 @@ export class ClaudeProvider implements AIProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Claude API request failed: ${response.statusText}`);
+      const error = await response.json().catch(() => null);
+      throw new Error(`Claude API request failed: ${response.statusText}${error ? ` - ${JSON.stringify(error)}` : ''}`);
     }
 
     const data = await response.json() as ClaudeResponse;

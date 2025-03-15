@@ -47,8 +47,9 @@ describe('ClaudeProvider', () => {
           method: 'POST',
           headers: {
             'x-api-key': 'test-anthropic-key',
-            'anthropic-version': '2024-01-01',
+            'anthropic-version': '2023-06-01',
             'Content-Type': 'application/json',
+            'anthropic-client': 'ytscript/2.0.2'
           },
           body: expect.stringContaining('concise')
         })
