@@ -1,28 +1,16 @@
-export { getTranscript, saveTranscript } from './services/transcript/index.js';
-export { TranscriptOptions, TranscriptResult, TranscriptSegment, TranscriptError } from './types/transcript.js';
-export { AIOptions, SummaryOptions, AIError } from './types/ai.js';
-export { SummaryResult, SummaryService } from './services/summary.js';
+export { getTranscript } from './services/transcript/index.js';
+export type { TranscriptOptions, TranscriptResult } from './types/transcript.js';
+export { TranscriptError } from './errors.js';
 
 import { getTranscript } from './services/transcript/index.js';
-import { SummaryService, SummaryResult } from './services/summary.js';
-import { AIOptions, SummaryOptions } from './types/ai.js';
-import { TranscriptOptions } from './types/transcript.js';
-import { saveToFile } from './utils/fileHandler.js';
-import { getTitleFromUrl } from './utils/titleFetcher.js';
+import type { TranscriptOptions, TranscriptResult } from './types/transcript.js';
+import ytdl from 'ytdl-core';
 
-export interface VideoOptions extends AIOptions, TranscriptOptions {
-  summary?: SummaryOptions;
+export interface VideoOptions extends TranscriptOptions {
+  outputPath?: string;
 }
 
-export async function summarizeVideo(url: string, options: VideoOptions = {}): Promise<SummaryResult> {
-  const transcriptResult = await getTranscript(url, options);
-  const summaryService = new SummaryService(options);
-  return summaryService.summarizeTranscript(transcriptResult, options.summary);
+export async function getVideoTranscript(url: string, options: VideoOptions = {}): Promise<TranscriptResult> {
+  const info = await ytdl.getInfo(url);
+  return getTranscript(info, options);
 }
-
-export async function saveSummary(url: string, options: VideoOptions = {}): Promise<string> {
-  const result = await summarizeVideo(url, options);
-  const title = await getTitleFromUrl(url);
-  const content = `Transcript:\n${result.transcript}\n\nSummary:\n${result.summary}`;
-  return saveToFile(content, title, options.outputPath);
-} 
