@@ -66,3 +66,7 @@ docs/*
 # Documentation (work in progress)
 docs/ transcript_*.json
 transcript_*.txt
+
+# Generated files
+raw_transcript.xml
+transcript_*.json
