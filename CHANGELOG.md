@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2024-03-15
+
+### Fixed
+
+- Updated ChatGPT model from `gpt-4` to `gpt-4-turbo-preview`
+- Fixed Claude API headers with correct `anthropic-version`
+- Enhanced XML parsing and validation in transcript service
+- Improved error handling for non-XML responses
+- Added comprehensive API key setup instructions in documentation
+- Updated `.env.example` with all required API keys
+
 ## [2.0.2] - 2024-03-15
 
 ### Fixed
